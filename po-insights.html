@@ -17,6 +17,49 @@
             background-color: #f8fafc;
             color: #1e293b;
         }
+
+  header {
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.header-buttons button:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+
+
         
         .header {
             background: white;
@@ -248,20 +291,18 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div style="display: flex; align-items: center;">
-            <div class="logo">
-                <img src="Finifi Logo.png" alt="FiniFi Logo" style="height: 25px;">
-            </div>
-            <div class="dashboard-title">Customer PO Insights</div>
-        </div>
-        <div class="date-filter">
-            <button class="filter-btn">Today</button>
-            <button class="filter-btn">7 Days</button>
-            <button class="filter-btn active">30 Days</button>
-            <button class="filter-btn">90 Days</button>
-        </div>
-    </div>
+    <header>
+      <div class="logo">
+       <img src="finifi-logo.png" alt="Finifi Logo" style="height: 28px;">
+       <span>Dashboard Hub</span>
+      </div>
+      <div class="header-buttons">
+       <button onclick="window.location.href='index.html'">⬅ Go Back</button>
+       <button onclick="location.reload()">⟳ Refresh</button>
+      <button onclick="exportDashboard()">⇩ Export</button>
+      </div>
+    </header>
+
     
     <div class="container">
         <div class="warning-banner">
