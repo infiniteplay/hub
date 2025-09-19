@@ -5,14 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SKU Trends Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-  <style>
-    /* Ensure canvas has fixed height */
-    .chart-container {
-      position: relative;
-      height: 320px;
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -21,7 +14,7 @@
     <div class="w-full px-6 py-4 flex justify-between items-center">
       <!-- Logo + Hub Title -->
       <div class="flex items-center space-x-3">
-        <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
+        <img src="finifi-logo.png" alt="Finifi Logo" class="h-7">
         <span class="text-xl font-semibold text-black">Dashboard Hub</span>
       </div>
       <!-- Action Buttons -->
@@ -43,7 +36,7 @@
   </header>
 
   <!-- Main Content -->
-  <main class="px-6 pt-24 pb-8 max-w-7xl mx-auto">
+  <main class="px-6 pt-28 pb-8 max-w-7xl mx-auto">
     <!-- Page Title -->
     <h1 class="text-2xl font-bold text-gray-800 mb-6">SKU Trends Across Channels</h1>
 
@@ -71,8 +64,66 @@
       </div>
     </section>
 
-    <!-- Charts Row -->
+    <!-- Charts -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- SKU Trends -->
       <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
         <h3 class="text-lg font-semibold text-gray-700 mb-4">SKU Trends by Channel</h3>
-        <div class="chart-co
+        <canvas id="skuTrendChart" height="320"></canvas>
+      </div>
+      <!-- Category Mix -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Category Mix</h3>
+        <canvas id="categoryMixChart" height="320"></canvas>
+      </div>
+    </section>
+
+    <!-- Top SKUs -->
+    <section class="bg-white p-6 rounded-lg shadow mb-6">
+      <h3 class="text-lg font-semibold text-gray-700 mb-4">Top 5 SKUs Performance</h3>
+      <canvas id="topSkusChart" height="320"></canvas>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    function exportDashboard() {
+      alert("Export functionality coming soon!");
+    }
+
+    // SKU Trends
+    new Chart(document.getElementById('skuTrendChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [
+          { label: 'DMart', data: [4200,4600,4800,5000,5200,5400], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true },
+          { label: 'Blinkit', data: [2200,2400,2600,2800,3000,3100], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.4, fill: true },
+          { label: 'BigBasket', data: [3100,3300,3500,3700,4000,4200], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Category Mix
+    new Chart(document.getElementById('categoryMixChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Staples','Oils & Ghee','Beverages','Snacks'],
+        datasets: [{ data: [38,22,18,22], backgroundColor: ['#3b82f6','#f59e0b','#8b5cf6','#10b981'] }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Top SKUs
+    new Chart(document.getElementById('topSkusChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['Premium Rice 5kg','Cooking Oil 1L','Organic Wheat Flour','Cold Drink 500ml','Namkeen Pack'],
+        datasets: [{ label: 'Units Sold', data: [42300,28900,36200,21800,19400], backgroundColor: '#3b82f6' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  </script>
+</body>
+</html>
