@@ -20,6 +20,59 @@
             line-height: 1.6;
         }
 
+        header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+}
+
+body {
+  padding-top: 70px; /* prevents content from hiding behind fixed header */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.hub-title {
+  color: #000; /* black text for "Dashboard Hub" */
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.header-buttons button:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+
         .header {
             background-color: white;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -403,31 +456,18 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="header-left">
-                <div class="logo-section">
-                        <img src="Finifi_Logo-trans.png" alt="FiniFi Logo" style="height: 25px;">
-                    <div class="header-title">
-                        <h1>Insights</h1>
-                    </div>
-                </div>
-            </div>
-            <div class="header-controls">
-                <select class="select-input" id="periodSelect">
-                    <option>This Month</option>
-                    <option>Last Month</option>
-                    <option>This Quarter</option>
-                    <option>This Year</option>
-                </select>
-                <button class="btn-primary">
-                    <i class="fas fa-download"></i>
-                    Export
-                </button>
-            </div>
-        </div>
-    </div>
+    <header>
+  <div class="logo">
+    <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
+    <span class="hub-title">Account Payable Overview</span>
+  </div>
+  <div class="header-buttons">
+    <button onclick="window.location.href='index.html'">Go Back</button>
+    <button onclick="location.reload()">Refresh</button>
+    <button onclick="exportDashboard()">Export</button>
+  </div>
+</header>
+
 
     <!-- Tabs -->
     <div class="tabs-container">
