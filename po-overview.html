@@ -17,6 +17,59 @@
             background-color: #f8fafc;
             color: #1e293b;
         }
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+}
+
+body {
+  padding-top: 70px; /* prevents content from hiding behind fixed header */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.hub-title {
+  color: #000; /* black text for "Dashboard Hub" */
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.header-buttons button:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
         
         .header {
             background: white;
@@ -220,12 +273,18 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">
-            <img src="Finifi_Logo-trans.png" alt="FiniFi Logo" style="height: 25px;">
-        </div>
-        <div class="dashboard-title">PO Overview Dashboard</div>
-    </div>
+    <header>
+  <div class="logo">
+    <img src="finifi-logo.png" alt="Finifi Logo" style="height: 28px;">
+    <span class="hub-title">Dashboard Hub</span>
+  </div>
+  <div class="header-buttons">
+    <button onclick="window.location.href='index.html'">Go Back</button>
+    <button onclick="location.reload()">Refresh</button>
+    <button onclick="exportDashboard()">Export</button>
+  </div>
+</header>
+
     
     <div class="container">
         <!-- Key Metrics -->
