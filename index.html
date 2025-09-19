@@ -1,68 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>All Dashboards</title>
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finifi Dashboard Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background:#f8f9fa;
-        color:#1f2937;
-        padding:40px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f9fafb;
+      color: #1f2937;
+      line-height: 1.6;
     }
-    h1 {
-        text-align:center;
-        font-size:32px;
-        font-weight:700;
-        margin-bottom:40px;
+
+    header {
+      background: white;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .grid {
-        display:grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
-        gap:24px;
-        max-width:1200px;
-        margin:0 auto;
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #3b82f6;
     }
-    .card {
-        background:white;
-        border-radius:12px;
-        box-shadow:0 2px 6px rgba(0,0,0,0.1);
-        padding:30px 20px;
-        text-align:center;
-        text-decoration:none;
-        color:inherit;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    .search-box {
+      padding: 8px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 280px;
     }
-    .card:hover {
-        transform:translateY(-4px);
-        box-shadow:0 6px 12px rgba(0,0,0,0.15);
+
+    main {
+      padding: 24px;
+      max-width: 1200px;
+      margin: auto;
     }
-    .card-title {
-        font-size:20px;
-        font-weight:600;
-        margin-top:10px;
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
     }
-    .card-desc {
-        font-size:14px;
-        color:#6b7280;
-        margin-top:6px;
+
+    .dashboard-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
     }
-</style>
+
+    .dashboard-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+
+    .dashboard-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+    }
+
+    .dashboard-desc {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    @media (max-width: 600px) {
+      .search-box {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Dashboards</h1>
-    <div class="grid">
-        <a href="stock-forecast.html" class="card">
-            <div class="card-title">SKU Trend Analysis & Forecast</div>
-            <div class="card-desc">Forecast and depot/channel insights</div>
-        </a>
-        <a href="sku-fill-rate.html" class="card">
-            <div class="card-title">Account Wise SKU Fill Rate</div>
-            <div class="card-desc">Purchase order & fulfillment metrics</div>
-        </a>
-        <!-- Add more dashboard links here in the same pattern -->
+  <header>
+    <div class="logo">
+      <img src="finifi-logo.png" alt="Finifi Logo" style="height: 28px;">
+      <span>Dashboard Hub</span>
     </div>
+    <input type="text" id="searchInput" class="search-box" placeholder="Search dashboards...">
+  </header>
+
+  <main>
+    <div class="dashboard-grid" id="dashboardGrid">
+      <a href="fill-rate-report.html" class="dashboard-card" data-name="Fill Rate Report">
+        <div class="dashboard-title">Fill Rate Report</div>
+        <div class="dashboard-desc">Track purchase order fill rates.</div>
+      </a>
+      <a href="po-insights.html" class="dashboard-card" data-name="PO Insights">
+        <div class="dashboard-title">PO Insights</div>
+        <div class="dashboard-desc">Customer purchase order insights.</div>
+      </a>
+      <a href="po-overview.html" class="dashboard-card" data-name="PO Overview">
+        <div class="dashboard-title">PO Overview</div>
+        <div class="dashboard-desc">Overview of purchase orders.</div>
+      </a>
+      <a href="sku-fill-rate.html" class="dashboard-card" data-name="SKU Fill Rate">
+        <div class="dashboard-title">SKU Fill Rate</div>
+        <div class="dashboard-desc">Account-wise SKU performance.</div>
+      </a>
+      <a href="detailed-report.html" class="dashboard-card" data-name="Detailed Report">
+        <div class="dashboard-title">Detailed Report</div>
+        <div class="dashboard-desc">Breakdown by account, location, SKU.</div>
+      </a>
+      <a href="payments-grn.html" class="dashboard-card" data-name="Payments & GRN">
+        <div class="dashboard-title">Payments & GRN</div>
+        <div class="dashboard-desc">Track invoices, payments, and GRNs.</div>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const dashboardCards = document.querySelectorAll(".dashboard-card");
+
+    searchInput.addEventListener("input", function() {
+      const query = this.value.toLowerCase();
+      dashboardCards.forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        card.style.display = name.includes(query) ? "block" : "none";
+      });
+    });
+  </script>
 </body>
 </html>
