@@ -361,7 +361,7 @@ body {
 </head>
 <body>
     <div class="container">
-        <header>
+<header>
   <div class="logo">
     <img src="finifi-logo.png" alt="Finifi Logo" style="height: 28px;">
     <span class="hub-title">Dashboard Hub</span>
@@ -373,6 +373,20 @@ body {
   </div>
 </header>
 
+        
+        <div class="controls">
+            <div class="controls-left">
+                <div class="date-filter">
+                    <span>Date Range:</span>
+                    <input type="date" id="fromDate" value="2025-01-01">
+                    <span>to</span>
+                    <input type="date" id="toDate" value="2025-06-08">
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by Account, Customer, or Warehouse...">
+            </div>
+        </div>
         
         <div class="summary-stats">
             <div class="stat-card">
