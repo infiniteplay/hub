@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlet Traffic Light Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        .date-controls {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .date-input {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 400px;
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f9fafb;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 16px;
+            background: #f3f4f6;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .legend-item:hover {
+            background: #e5e7eb;
+        }
+
+        .legend-item.active {
+            background: #ddd6fe;
+            border-color: #8b5cf6;
+            color: #5b21b6;
+        }
+
+        .filter-btn {
+            user-select: none;
+        }
+
+        .legend-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .summary-bar {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 24px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-number.green { color: #059669; }
+        .summary-number.yellow { color: #d97706; }
+        .summary-number.red { color: #dc2626; }
+        .summary-number.blue { color: #2563eb; }
+
+        .summary-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .table-container {
+            background: #fff;
+            margin: 0;
+            overflow-x: auto;
+            height: calc(100vh - 340px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background: #f3f4f6;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        td {
+            padding: 12px 16px;
+            vertical-align: middle;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .traffic-light.green {
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .traffic-light.yellow {
+            background: #f59e0b;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+
+        .traffic-light.red {
+            background: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+
+        .outlet-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .metric-value {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .last-order {
+            font-weight: 500;
+        }
+
+        .last-order.recent { color: #059669; }
+        .last-order.warning { color: #d97706; }
+        .last-order.critical { color: #dc2626; }
+
+        .avg-time {
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .avg-order-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .potential-loss {
+            font-weight: 600;
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .warehouse-name {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .pagination {
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .pagination-info {
+            color: #6b7280;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .page-btn:hover {
+            background: #f9fafb;
+        }
+
+        .page-btn.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        @media (max-width: 768px) {
+            .date-controls {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                margin: 0;
+                max-width: none;
+            }
+            
+            .summary-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">fi</div>
+                <span style="font-weight: 600;">finifi</span>
+            </div>
+            <div class="title">Outlet Order Frequency Dashboard</div>
+        </div>
+        <div class="header-controls">
+            <button class="btn" onclick="refreshData()">
+                <span>🔄</span> Refresh
+            </button>
+            <button class="btn" onclick="exportData()">
+                <span>📊</span> Export
+            </button>
+        </div>
+    </div>
+
+    <div class="date-controls">
+        <div class="date-range">
+            <label>Analysis Period:</label>
+            <input type="date" class="date-input" id="startDate" value="2025-07-01">
+            <span>to</span>
+            <input type="date" class="date-input" id="endDate" value="2025-09-20">
+        </div>
+        
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search by Account, Customer, or Warehouse...">
+        </div>
+
+        <div class="legend">
+            <div class="legend-item filter-btn" data-filter="all" onclick="filterByStatus('all')">
+                <span>All Outlets</span>
+            </div>
+            <div class="legend-item filter-btn" data-filter="green" onclick="filterByStatus('green')">
+                <div class="legend-light green"></div>
+                <span>Active (&lt;2 weeks)</span>
+            </div>
+            <div class="legend-item filter-btn" data-filter="yellow" onclick="filterByStatus('yellow')">
+                <div class="legend-light yellow"></div>
+                <span>At Risk (2-3 weeks)</span>
+            </div>
+            <div class="legend-item filter-btn" data-filter="red" onclick="filterByStatus('red')">
+                <div class="legend-light red"></div>
+                <span>Inactive (&gt;3 weeks)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="summary-number blue" id="totalOutlets">1,248</div>
+            <div class="summary-label">Total Outlets</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number green" id="activeOutlets">847</div>
+            <div class="summary-label">Active Outlets</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number yellow" id="atRiskOutlets">289</div>
+            <div class="summary-label">At Risk Outlets</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number red" id="inactiveOutlets">112</div>
+            <div class="summary-label">Inactive Outlets</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value" id="avgOrderValue">₹24,567</div>
+            <div class="summary-label">Avg Order Value</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value" id="totalPotentialLoss">₹12.4L</div>
+            <div class="summary-label">Total Potential Loss</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="outletTable">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="status">Status</th>
+                    <th class="sortable" data-sort="account">Account Name</th>
+                    <th class="sortable" data-sort="customer">Customer Name</th>
+                    <th class="sortable" data-sort="warehouse">Warehouse Name</th>
+                    <th class="sortable" data-sort="lastOrdered">Last Ordered</th>
+                    <th class="sortable" data-sort="avgTimeBetween">Avg Time Between Orders</th>
+                    <th class="sortable" data-sort="avgOrderValue">Average Order Value</th>
+                    <th class="sortable" data-sort="potentialLoss">Potential Loss</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Table rows will be generated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        <div class="pagination-info" id="paginationInfo">
+            Showing 1-50 of 1,248 outlets
+        </div>
+        <div class="pagination-controls" id="paginationControls">
+            <button class="page-btn" onclick="changePage(-1)">‹ Previous</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">...</button>
+            <button class="page-btn">25</button>
+            <button class="page-btn" onclick="changePage(1)">Next ›</button>
+        </div>
+    </div>
+
+    <script>
+        // Generate realistic outlet data focused on order frequency
+        function generateOutletData() {
+            const accounts = ['Walmart', 'BigBasket', 'Zepto', 'DMart', 'Blinkit', 'Swiggy Instamart', 'Dunzo', 'Metro Cash & Carry', 'Reliance Fresh', 'Amazon Fresh'];
+            const warehouses = ['SAWHNEY AGENCIES', 'SAKSHI AGENCY - PUNE', 'ISTORE DIRECT TRADING', 'SMS Marketing (Chennai)', 'ASHISH MARKETING-MUM', 'ALPINO HEALTH FOODS', 'HW WELLNESS SOLUTION', 'Business Process Matrix P', 'METRO LOGISTICS PUNE', 'RELIANCE SUPPLY CHAIN'];
+            const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Pune', 'Hyderabad', 'Kolkata', 'Ahmedabad', 'Jaipur', 'Lucknow', 'Gurgaon', 'Noida', 'Indore', 'Surat', 'Coimbatore'];
+            const areas = ['Andheri', 'Bandra', 'Malad', 'Thane', 'Koregaon', 'Vashi', 'Sarjapur', 'Whitefield', 'Electronic City', 'Marathahalli', 'Sector 18', 'Connaught Place', 'Rajouri Garden', 'Lajpat Nagar'];
+            
+            const data = [];
+            const currentDate = new Date('2025-09-20');
+            
+            // Create specific examples to ensure we have enough of each status
+            const specificOutlets = [
+                // Red status outlets (5 examples)
+                { account: 'BigBasket', city: 'Mumbai', area: 'Andheri', daysAgo: 25, avgTimeBetween: 7, avgOrderValue: 45000 },
+                { account: 'DMart', city: 'Pune', area: 'Koregaon', daysAgo: 32, avgTimeBetween: 10, avgOrderValue: 28000 },
+                { account: 'Walmart', city: 'Delhi', area: 'Connaught Place', daysAgo: 28, avgTimeBetween: 14, avgOrderValue: 65000 },
+                { account: 'Zepto', city: 'Bangalore', area: 'Whitefield', daysAgo: 45, avgTimeBetween: 5, avgOrderValue: 18000 },
+                { account: 'Blinkit', city: 'Gurgaon', area: 'Sector 18', daysAgo: 38, avgTimeBetween: 8, avgOrderValue: 52000 },
+                
+                // Yellow status outlets (5 examples)
+                { account: 'Swiggy Instamart', city: 'Chennai', area: 'Electronic City', daysAgo: 16, avgTimeBetween: 12, avgOrderValue: 33000 },
+                { account: 'Amazon Fresh', city: 'Hyderabad', area: 'Marathahalli', daysAgo: 19, avgTimeBetween: 15, avgOrderValue: 41000 },
+                { account: 'Metro Cash & Carry', city: 'Kolkata', area: 'Rajouri Garden', daysAgo: 15, avgTimeBetween: 9, avgOrderValue: 38000 },
+                { account: 'Reliance Fresh', city: 'Ahmedabad', area: 'Vashi', daysAgo: 17, avgTimeBetween: 11, avgOrderValue: 29000 },
+                { account: 'Dunzo', city: 'Jaipur', area: 'Lajpat Nagar', daysAgo: 20, avgTimeBetween: 13, avgOrderValue: 22000 },
+                
+                // Green status outlets (5 examples)
+                { account: 'BigBasket', city: 'Mumbai', area: 'Bandra', daysAgo: 3, avgTimeBetween: 7, avgOrderValue: 42000 },
+                { account: 'Blinkit', city: 'Delhi', area: 'Noida', daysAgo: 1, avgTimeBetween: 4, avgOrderValue: 35000 },
+                { account: 'Zepto', city: 'Bangalore', area: 'Sarjapur', daysAgo: 8, avgTimeBetween: 6, avgOrderValue: 48000 },
+                { account: 'Walmart', city: 'Pune', area: 'Malad', daysAgo: 5, avgTimeBetween: 10, avgOrderValue: 58000 },
+                { account: 'Swiggy Instamart', city: 'Chennai', area: 'Thane', daysAgo: 12, avgTimeBetween: 8, avgOrderValue: 31000 }
+            ];
+            
+            // Add specific outlets first
+            specificOutlets.forEach((outlet, index) => {
+                const lastOrderDate = new Date(currentDate);
+                lastOrderDate.setDate(currentDate.getDate() - outlet.daysAgo);
+                
+                let potentialLoss = 0;
+                let status = 'green';
+                
+                if (outlet.daysAgo >= 21) { // 3+ weeks
+                    status = 'red';
+                    const ordersPerMonth = 30 / outlet.avgTimeBetween;
+                    potentialLoss = Math.floor(ordersPerMonth * outlet.avgOrderValue * (outlet.daysAgo / 30));
+                } else if (outlet.daysAgo >= 14) { // 2-3 weeks
+                    status = 'yellow';
+                    const ordersPerMonth = 30 / outlet.avgTimeBetween;
+                    potentialLoss = Math.floor(ordersPerMonth * outlet.avgOrderValue * 0.5);
+                }
+                
+                data.push({
+                    account: outlet.account,
+                    customer: `${outlet.account} ${outlet.area}, ${outlet.city}`,
+                    warehouse: warehouses[Math.floor(Math.random() * warehouses.length)],
+                    lastOrdered: lastOrderDate,
+                    daysAgo: outlet.daysAgo,
+                    avgTimeBetween: outlet.avgTimeBetween,
+                    avgOrderValue: outlet.avgOrderValue,
+                    potentialLoss,
+                    status
+                });
+            });
+            
+            // Generate the rest randomly
+            for (let i = specificOutlets.length; i < 1248; i++) {
+                const account = accounts[Math.floor(Math.random() * accounts.length)];
+                const city = cities[Math.floor(Math.random() * cities.length)];
+                const area = areas[Math.floor(Math.random() * areas.length)];
+                
+                // Generate last order date (0-60 days ago)
+                const daysAgo = Math.floor(Math.random() * 60);
+                const lastOrderDate = new Date(currentDate);
+                lastOrderDate.setDate(currentDate.getDate() - daysAgo);
+                
+                // Calculate average time between orders (3-30 days)
+                const avgTimeBetween = Math.floor(Math.random() * 28) + 3;
+                
+                // Generate average order value (₹5,000 to ₹80,000)
+                const avgOrderValue = Math.floor(Math.random() * 75000) + 5000;
+                
+                // Calculate potential loss for at-risk and inactive outlets
+                let potentialLoss = 0;
+                let status = 'green';
+                
+                if (daysAgo >= 21) { // 3+ weeks
+                    status = 'red';
+                    // Calculate monthly loss based on average order frequency
+                    const ordersPerMonth = 30 / avgTimeBetween;
+                    potentialLoss = Math.floor(ordersPerMonth * avgOrderValue * (daysAgo / 30));
+                } else if (daysAgo >= 14) { // 2-3 weeks
+                    status = 'yellow';
+                    const ordersPerMonth = 30 / avgTimeBetween;
+                    potentialLoss = Math.floor(ordersPerMonth * avgOrderValue * 0.5); // Half month potential loss
+                }
+                
+                data.push({
+                    account,
+                    customer: `${account} ${area}, ${city}`,
+                    warehouse: warehouses[Math.floor(Math.random() * warehouses.length)],
+                    lastOrdered: lastOrderDate,
+                    daysAgo,
+                    avgTimeBetween,
+                    avgOrderValue,
+                    potentialLoss,
+                    status
+                });
+            }
+            
+            // Sort to show examples of each status on first page
+            // Put specific examples first, then sort the rest
+            const specificData = data.slice(0, specificOutlets.length);
+            const randomData = data.slice(specificOutlets.length).sort((a, b) => b.daysAgo - a.daysAgo);
+            
+            // Arrange specific data to show variety: red, yellow, green mixed
+            const arrangedSpecific = [
+                ...specificData.filter(d => d.status === 'red').slice(0, 2),
+                ...specificData.filter(d => d.status === 'yellow').slice(0, 2),
+                ...specificData.filter(d => d.status === 'green').slice(0, 2),
+                ...specificData.filter(d => d.status === 'red').slice(2),
+                ...specificData.filter(d => d.status === 'yellow').slice(2),
+                ...specificData.filter(d => d.status === 'green').slice(2)
+            ];
+            
+            return [...arrangedSpecific, ...randomData];
+        }
+
+        let currentData = generateOutletData();
+        let filteredData = [...currentData];
+        let currentPage = 1;
+        let currentFilter = 'all';
+        const itemsPerPage = 50;
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        function formatDate(date) {
+            const today = new Date('2025-09-20');
+            const diffTime = Math.abs(today - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 14) return `${Math.floor(diffDays/7)} week ago`;
+            if (diffDays < 28) return `${Math.floor(diffDays/7)} weeks ago`;
+            
+            return date.toLocaleDateString('en-IN', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+        }
+
+        function formatCurrency(amount) {
+            if (amount >= 100000) {
+                return `₹${(amount/100000).toFixed(1)}L`;
+            } else if (amount >= 1000) {
+                return `₹${(amount/1000).toFixed(1)}K`;
+            } else {
+                return `₹${amount.toLocaleString('en-IN')}`;
+            }
+        }
+
+        function getLastOrderClass(daysAgo) {
+            if (daysAgo < 14) return 'recent';
+            if (daysAgo < 21) return 'warning';
+            return 'critical';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = pageData.map(outlet => {
+                const lastOrderClass = getLastOrderClass(outlet.daysAgo);
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="status-indicator">
+                                <div class="traffic-light ${outlet.status}"></div>
+                                <span>${outlet.status === 'green' ? 'Active' : outlet.status === 'yellow' ? 'At Risk' : 'Inactive'}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="outlet-name">${outlet.account}</div>
+                        </td>
+                        <td>
+                            <div class="outlet-name">${outlet.customer}</div>
+                        </td>
+                        <td>
+                            <div class="warehouse-name">${outlet.warehouse}</div>
+                        </td>
+                        <td>
+                            <span class="last-order ${lastOrderClass}">${formatDate(outlet.lastOrdered)}</span>
+                        </td>
+                        <td>
+                            <span class="avg-time">${outlet.avgTimeBetween} days</span>
+                        </td>
+                        <td>
+                            <span class="avg-order-value">${formatCurrency(outlet.avgOrderValue)}</span>
+                        </td>
+                        <td>
+                            ${outlet.potentialLoss > 0 
+                                ? `<span class="potential-loss">${formatCurrency(outlet.potentialLoss)}</span>`
+                                : '<span style="color: #6b7280;">-</span>'
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updatePagination();
+        }
+
+        function updateSummary() {
+            const active = filteredData.filter(o => o.status === 'green').length;
+            const atRisk = filteredData.filter(o => o.status === 'yellow').length;
+            const inactive = filteredData.filter(o => o.status === 'red').length;
+            const avgOrder = Math.floor(filteredData.reduce((sum, o) => sum + o.avgOrderValue, 0) / filteredData.length);
+            const totalLoss = filteredData.reduce((sum, o) => sum + o.potentialLoss, 0);
+            
+            document.getElementById('totalOutlets').textContent = filteredData.length.toLocaleString();
+            document.getElementById('activeOutlets').textContent = active.toLocaleString();
+            document.getElementById('atRiskOutlets').textContent = atRisk.toLocaleString();
+            document.getElementById('inactiveOutlets').textContent = inactive.toLocaleString();
+            document.getElementById('avgOrderValue').textContent = formatCurrency(avgOrder);
+            document.getElementById('totalPotentialLoss').textContent = formatCurrency(totalLoss);
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
+            
+            document.getElementById('paginationInfo').textContent = 
+                `Showing ${startItem.toLocaleString()}-${endItem.toLocaleString()} of ${filteredData.length.toLocaleString()} outlets`;
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredData.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch(column) {
+                    case 'lastOrdered':
+                        valueA = a.daysAgo;
+                        valueB = b.daysAgo;
+                        break;
+                    case 'status':
+                        const statusOrder = { red: 3, yellow: 2, green: 1 };
+                        valueA = statusOrder[a.status];
+                        valueB = statusOrder[b.status];
+                        break;
+                    default:
+                        valueA = a[column];
+                        valueB = b[column];
+                        if (typeof valueA === 'string') {
+                            valueA = valueA.toLowerCase();
+                            valueB = valueB.toLowerCase();
+                        }
+                }
+                
+                if (sortDirection === 'asc') {
+                    return valueA > valueB ? 1 : -1;
+                } else {
+                    return valueA < valueB ? 1 : -1;
+                }
+            });
+            
+            currentPage = 1;
+            renderTable();
+        }
+
+        function filterByStatus(status) {
+            currentFilter = status;
+            currentPage = 1;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${status}"]`).classList.add('active');
+            
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // First apply search filter
+            let data = currentData.filter(outlet => 
+                outlet.account.toLowerCase().includes(searchTerm) ||
+                outlet.customer.toLowerCase().includes(searchTerm) ||
+                outlet.warehouse.toLowerCase().includes(searchTerm)
+            );
+            
+            // Then apply status filter
+            if (currentFilter !== 'all') {
+                data = data.filter(outlet => outlet.status === currentFilter);
+            }
+            
+            filteredData = data;
+            currentPage = 1;
+            renderTable();
+            updateSummary();
+        }
+
+        function filterData() {
+            applyFilters();
+        }
+
+        function refreshData() {
+            currentData = generateOutletData();
+            currentFilter = 'all';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-filter="all"]').classList.add('active');
+            applyFilters();
+        }
+
+        function exportData() {
+            // Simulate export functionality
+            const csvContent = [
+                ['Status', 'Account Name', 'Customer Name', 'Warehouse Name', 'Last Ordered', 'Avg Time Between Orders', 'Avg Order Value', 'Potential Loss'],
+                ...filteredData.map(outlet => [
+                    outlet.status === 'green' ? 'Active' : outlet.status === 'yellow' ? 'At Risk' : 'Inactive',
+                    outlet.account,
+                    outlet.customer,
+                    outlet.warehouse,
+                    formatDate(outlet.lastOrdered),
+                    `${outlet.avgTimeBetween} days`,
+                    outlet.avgOrderValue,
+                    outlet.potentialLoss || 0
+                ])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'outlet_frequency_dashboard.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('startDate').addEventListener('change', refreshData);
+        document.getElementById('endDate').addEventListener('change', refreshData);
+
+        // Add click listeners to sortable headers
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortKey = th.getAttribute('data-sort');
+                sortTable(sortKey);
+            });
+        });
+
+        // Initial render
+        renderTable();
+        updateSummary();
+        
+        // Set initial active filter
+        document.querySelector('[data-filter="all"]').classList.add('active');
+    </script>
+</body>
+</html>
