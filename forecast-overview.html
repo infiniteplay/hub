@@ -7,26 +7,33 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 font-sans pt-20">
 
-  <!-- Header -->
-  <header class="bg-white shadow-md sticky top-0 z-10">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      
-      <!-- Left side: Logo + Title -->
-      <div class="flex items-center space-x-3">
-        <!-- Logo placeholder (replace src with your logo) -->
-        <img src="logo-finifi.png" alt="Logo" style="height: 25px;>
-        <h1 class="text-2xl font-bold text-gray-800">Retail Demand Forecast</h1>
-      </div>
-      
-      <!-- Right side: Menu -->
-      <nav class="space-x-6">
-        <a href="stock_forecasting_trend.html" class="text-gray-600 hover:text-blue-600 font-medium">Dashboard</a>
-        <a href="#" class="text-gray-600 hover:text-blue-600 font-medium">Reports</a>
-      </nav>
+  <!-- Consistent Header -->
+<header class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    
+    <!-- Left side: Logo + Title -->
+    <div class="flex items-center space-x-3">
+      <img src="finifi-logo.png" alt="Logo" class="h-7">
+      <span class="text-xl font-semibold text-black">Dashboard Hub</span>
     </div>
-  </header>
+
+    <!-- Right side: Buttons -->
+    <div class="flex space-x-3">
+      <button onclick="window.location.href='index.html'" class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
+        Go Back
+      </button>
+      <button onclick="location.reload()" class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
+        Refresh
+      </button>
+      <button onclick="exportDashboard()" class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
+        Export
+      </button>
+    </div>
+  </div>
+</header>
+
 
   <!-- Main -->
   <main class="max-w-7xl mx-auto px-4 py-6">
