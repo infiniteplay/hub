@@ -3,136 +3,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SKU Trends Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-</head>
-<body class="bg-gray-50 font-sans">
+  <title>SKU Trend Analysis - Finifi PO Platform</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc; min-height: 100vh; color: #334155;
+    }
 
-  <!-- Sticky Full-Width Header -->
-  <header class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow z-50">
-    <div class="w-full px-6 py-4 flex justify-between items-center">
-      <!-- Logo + Hub Title -->
-      <div class="flex items-center space-x-3">
-        <img src="finifi-logo.png" alt="Finifi Logo" class="h-7">
-        <span class="text-xl font-semibold text-black">Dashboard Hub</span>
+    /* ===== Sticky Header ===== */
+    .site-header {
+      position: sticky; top: 0; left: 0; right: 0;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 1000;
+    }
+    .site-header-inner {
+      max-width: 1400px; margin: 0 auto;
+      padding: 16px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .site-header .logo-title {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .site-header img { height: 28px; }
+    .site-header span { font-size: 1.25em; font-weight: 600; color: #000; }
+    .header-buttons button {
+      margin-left: 10px; padding: 6px 14px;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      background: #f9fafb; cursor: pointer;
+      font-size: 0.9em; font-weight: 500; color: #374151;
+      transition: all 0.2s ease;
+    }
+    .header-buttons button:hover { background: #2563eb; color: white; }
+
+    /* ===== Dashboard Layout ===== */
+    .dashboard { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-group {
+      background: white; border-radius: 8px; padding: 10px 16px;
+      border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .filter-group label { font-size: 0.9em; font-weight: 600; color: #374151; margin-bottom: 4px; display: block; }
+    .filter-group select { border: none; font-size: 0.95em; background: transparent; outline: none; cursor: pointer; }
+
+    /* Cards & Grids */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .card {
+      background: white; border-radius: 10px; padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+    .card h3 { font-size: 1.2em; margin-bottom: 16px; color: #1e293b; font-weight: 600; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
+
+    .metric-card { text-align: center; padding: 24px 20px; }
+    .metric-label { font-size: 0.85em; font-weight: 600; color: #6b7280; letter-spacing: 0.5px; }
+    .metric-value { font-size: 2em; font-weight: 700; margin: 10px 0; }
+    .trend { font-weight: 600; font-size: 0.9em; margin-top: 4px; }
+    .trend.positive { color: #059669; } .trend.negative { color: #dc2626; }
+
+    .chart-container { position: relative; height: 280px; margin-top: 12px; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; margin-top: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 0.9em; }
+    th { background: #f8fafc; font-weight: 600; color: #374151; text-transform: uppercase; font-size: 0.8em; letter-spacing: 0.5px; }
+    tr:hover { background: #f9fafb; }
+
+    /* Summary Stats */
+    .summary-stats { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+    .stat-item { flex: 1; text-align: center; min-width: 120px; }
+    .stat-value { font-size: 1.4em; font-weight: 700; margin-bottom: 4px; }
+    .stat-label { font-size: 0.75em; color: #6b7280; }
+    .performance-indicator { height: 5px; border-radius: 3px; margin-top: 4px; }
+    .indicator-high { background: linear-gradient(90deg,#059669,#34d399); }
+    .indicator-medium { background: linear-gradient(90deg,#d97706,#fbbf24); }
+    .indicator-low { background: linear-gradient(90deg,#dc2626,#f87171); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Global Header ===== -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="logo-title">
+        <img src="finifi-logo.png" alt="Finifi Logo">
+        <span>Dashboard Hub</span>
       </div>
-      <!-- Action Buttons -->
-      <div class="flex space-x-3">
-        <button onclick="window.location.href='index.html'" 
-                class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
-          Go Back
-        </button>
-        <button onclick="location.reload()" 
-                class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
-          Refresh
-        </button>
-        <button onclick="exportDashboard()" 
-                class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-blue-600 hover:text-white transition">
-          Export
-        </button>
+      <div class="header-buttons">
+        <button onclick="window.location.href='index.html'">Go Back</button>
+        <button onclick="location.reload()">Refresh</button>
+        <button onclick="alert('Export coming soon!')">Export</button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="px-6 pt-28 pb-8 max-w-7xl mx-auto">
-    <!-- Page Title -->
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">SKU Trends Across Channels</h1>
+  <!-- ===== Dashboard Content ===== -->
+  <div class="dashboard">
 
-    <!-- KPIs -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-sm text-gray-500">Top Channel</h3>
-        <p class="text-2xl font-bold text-gray-800">DMart</p>
-        <p class="text-xs text-green-600">42% of total sales</p>
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Channel</label>
+        <select><option>All Channels</option><option>MT</option><option>QC</option><option>E-com</option></select>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-sm text-gray-500">Fastest Growing Category</h3>
-        <p class="text-2xl font-bold text-gray-800">Snacks</p>
-        <p class="text-xs text-green-600">+15.8% growth</p>
+      <div class="filter-group">
+        <label>Category</label>
+        <select><option>All</option><option>Staples</option><option>Oils & Ghee</option></select>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-sm text-gray-500">Total SKUs</h3>
-        <p class="text-2xl font-bold text-gray-800">1,245</p>
-        <p class="text-xs text-blue-600">Active across channels</p>
+      <div class="filter-group">
+        <label>Timeframe</label>
+        <select><option>Last 30 Days</option><option>Last 3 Months</option><option>Last Year</option></select>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-sm text-gray-500">Avg Fill Rate</h3>
-        <p class="text-2xl font-bold text-gray-800">93.4%</p>
-        <p class="text-xs text-green-600">↑ +3.2% vs last quarter</p>
-      </div>
-    </section>
+    </div>
 
-    <!-- Charts -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      <!-- SKU Trends -->
-      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">SKU Trends by Channel</h3>
-        <div class="h-80">
-          <canvas id="skuTrendChart"></canvas>
-        </div>
+    <!-- Example Metrics -->
+    <div class="grid">
+      <div class="card metric-card">
+        <div class="metric-label">Total SKUs</div>
+        <div class="metric-value" style="color:#3b82f6;">2,847</div>
+        <div class="trend positive">+156 new SKUs</div>
       </div>
-      <!-- Category Mix -->
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">Category Mix</h3>
-        <div class="h-80">
-          <canvas id="categoryMixChart"></canvas>
-        </div>
+      <div class="card metric-card">
+        <div class="metric-label">Growing SKUs</div>
+        <div class="metric-value" style="color:#059669;">1,892</div>
+        <div class="trend positive">66.5% portfolio</div>
       </div>
-    </section>
+      <div class="card metric-card">
+        <div class="metric-label">Top Growth Rate</div>
+        <div class="metric-value" style="color:#d97706;">+47.2%</div>
+        <div class="trend positive">Organic Quinoa</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-label">Risk Zone SKUs</div>
+        <div class="metric-value" style="color:#dc2626;">187</div>
+        <div class="trend negative">Declining</div>
+      </div>
+    </div>
 
-    <!-- Top SKUs -->
-    <section class="bg-white p-6 rounded-lg shadow mb-6">
-      <h3 class="text-lg font-semibold text-gray-700 mb-4">Top 5 SKUs Performance</h3>
-      <div class="h-80">
-        <canvas id="topSkusChart"></canvas>
+    <!-- Example Charts -->
+    <div class="grid">
+      <div class="card">
+        <h3>Channel Performance Trends</h3>
+        <div class="chart-container"><canvas id="channelChart"></canvas></div>
       </div>
-    </section>
-  </main>
+      <div class="card">
+        <h3>Category Growth Analysis</h3>
+        <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
 
-  <!-- Scripts -->
+  </div>
+
   <script>
-    function exportDashboard() {
-      alert("Export functionality coming soon!");
-    }
-
-    // SKU Trends
-    new Chart(document.getElementById('skuTrendChart').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
-        datasets: [
-          { label: 'DMart', data: [4200,4600,4800,5000,5200,5400], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true },
-          { label: 'Blinkit', data: [2200,2400,2600,2800,3000,3100], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.4, fill: true },
-          { label: 'BigBasket', data: [3100,3300,3500,3700,4000,4200], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } }
-      }
+    // Example Chart Setup
+    const chartColors = { mt:'#1e40af', qc:'#166534', ecom:'#92400e', primary:'#3b82f6', warning:'#f59e0b' };
+    new Chart(document.getElementById('channelChart'), {
+      type:'line',
+      data:{ labels:['W1','W2','W3','W4'], datasets:[
+        {label:'MT', data:[2100,2300,2500,2600], borderColor:chartColors.mt, fill:false},
+        {label:'QC', data:[1800,1950,2100,2250], borderColor:chartColors.qc, fill:false},
+        {label:'E-com', data:[1200,1350,1500,1680], borderColor:chartColors.ecom, fill:false}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false}
     });
-
-    // Category Mix
-    new Chart(document.getElementById('categoryMixChart').getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Staples','Oils & Ghee','Beverages','Snacks'],
-        datasets: [{ data: [38,22,18,22], backgroundColor: ['#3b82f6','#f59e0b','#8b5cf6','#10b981'] }]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    // Top SKUs
-    new Chart(document.getElementById('topSkusChart').getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: ['Premium Rice 5kg','Cooking Oil 1L','Organic Wheat Flour','Cold Drink 500ml','Namkeen Pack'],
-        datasets: [{ label: 'Units Sold', data: [42300,28900,36200,21800,19400], backgroundColor: '#3b82f6' }]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
+    new Chart(document.getElementById('categoryChart'), {
+      type:'doughnut',
+      data:{ labels:['Staples','Oils','Pulses'], datasets:[{data:[40,30,30], backgroundColor:[chartColors.primary,chartColors.warning,'#10b981']}]},
+      options:{responsive:true, maintainAspectRatio:false}
     });
   </script>
 </body>
