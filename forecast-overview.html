@@ -69,19 +69,25 @@
       <!-- SKU Trends -->
       <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
         <h3 class="text-lg font-semibold text-gray-700 mb-4">SKU Trends by Channel</h3>
-        <canvas id="skuTrendChart" height="320"></canvas>
+        <div class="h-80">
+          <canvas id="skuTrendChart"></canvas>
+        </div>
       </div>
       <!-- Category Mix -->
       <div class="bg-white p-6 rounded-lg shadow">
         <h3 class="text-lg font-semibold text-gray-700 mb-4">Category Mix</h3>
-        <canvas id="categoryMixChart" height="320"></canvas>
+        <div class="h-80">
+          <canvas id="categoryMixChart"></canvas>
+        </div>
       </div>
     </section>
 
     <!-- Top SKUs -->
     <section class="bg-white p-6 rounded-lg shadow mb-6">
       <h3 class="text-lg font-semibold text-gray-700 mb-4">Top 5 SKUs Performance</h3>
-      <canvas id="topSkusChart" height="320"></canvas>
+      <div class="h-80">
+        <canvas id="topSkusChart"></canvas>
+      </div>
     </section>
   </main>
 
@@ -102,7 +108,11 @@
           { label: 'BigBasket', data: [3100,3300,3500,3700,4000,4200], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true }
         ]
       },
-      options: { responsive: true, maintainAspectRatio: false }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } }
+      }
     });
 
     // Category Mix
