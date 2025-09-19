@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKU Trend Analysis - Finifi PO Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #334155;
+        }
+        
+        .dashboard {
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #64748b;
+            font-size: 1.1em;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .filter-group select {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #1f2937;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .metric-card {
+            padding: 20px;
+        }
+        
+        .sku-table-card {
+            padding: 30px;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h3 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #1e293b;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        
+        .metric-card {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            color: #64748b;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .trend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .trend.positive { color: #059669; }
+        .trend.negative { color: #dc2626; }
+        .trend.neutral { color: #64748b; }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px 18px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid #d1d5db;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .sku-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .sku-growing { background: #dcfce7; color: #166534; }
+        .sku-declining { background: #fee2e2; color: #991b1b; }
+        .sku-stable { background: #dbeafe; color: #1d4ed8; }
+        
+        .channel-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .mt { background: #dbeafe; color: #1d4ed8; }
+        .qc { background: #dcfce7; color: #166534; }
+        .ecom { background: #fef3c7; color: #92400e; }
+        
+        .performance-indicator {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            margin: 8px 0;
+        }
+        
+        .indicator-high { background: linear-gradient(90deg, #059669, #34d399); }
+        .indicator-medium { background: linear-gradient(90deg, #d97706, #fbbf24); }
+        .indicator-low { background: linear-gradient(90deg, #dc2626, #f87171); }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .card {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>SKU Trend Analysis</h1>
+            <p>Comprehensive insights from MT, QC & E-commerce channels • Real-time PO tracking & delivery analytics</p>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Channel</label>
+                <select id="channelFilter">
+                    <option>All Channels</option>
+                    <option>Modern Trade (MT)</option>
+                    <option>Quick Commerce (QC)</option>
+                    <option>E-commerce</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="categoryFilter">
+                    <option>All Categories</option>
+                    <option>Staples</option>
+                    <option>Oils & Ghee</option>
+                    <option>Pulses</option>
+                    <option>Spices</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Timeframe</label>
+                <select id="timeFilter">
+                    <option>Last 30 Days</option>
+                    <option>Last 3 Months</option>
+                    <option>Last 6 Months</option>
+                    <option>Last Year</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card metric-card">
+                <div class="metric-label">Total SKUs Tracked</div>
+                <div class="metric-value" style="color: #3b82f6;">2,847</div>
+                <div class="trend positive">+156 new SKUs this month</div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="metric-label">Growing SKUs</div>
+                <div class="metric-value" style="color: #059669;">1,892</div>
+                <div class="trend positive">↗ 66.5% of portfolio</div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="metric-label">Top Growth Rate</div>
+                <div class="metric-value" style="color: #d97706;">+47.2%</div>
+                <div class="trend positive">Organic Quinoa 500g</div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="metric-label">Risk Zone SKUs</div>
+                <div class="metric-value" style="color: #dc2626;">187</div>
+                <div class="trend negative">↘ Declining 30+ days</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Channel Performance Trends</h3>
+                <div class="chart-container">
+                    <canvas id="channelChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Category Growth Analysis</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Top Growing SKUs</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU Name</th>
+                                <th>Category</th>
+                                <th>Growth</th>
+                                <th>Channel</th>
+                                <th>Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Organic Quinoa 500g</td>
+                                <td><span class="sku-badge sku-growing">Health Foods</span></td>
+                                <td><span class="trend positive">+47.2%</span></td>
+                                <td><span class="channel-badge ecom">E-COM</span></td>
+                                <td>12,450 units</td>
+                            </tr>
+                            <tr>
+                                <td>Premium Basmati 1kg</td>
+                                <td><span class="sku-badge sku-growing">Staples</span></td>
+                                <td><span class="trend positive">+34.8%</span></td>
+                                <td><span class="channel-badge mt">MT</span><span class="channel-badge qc">QC</span></td>
+                                <td>89,230 units</td>
+                            </tr>
+                            <tr>
+                                <td>Cold Pressed Coconut Oil</td>
+                                <td><span class="sku-badge sku-growing">Oils & Ghee</span></td>
+                                <td><span class="trend positive">+28.5%</span></td>
+                                <td><span class="channel-badge ecom">E-COM</span><span class="channel-badge qc">QC</span></td>
+                                <td>34,670 units</td>
+                            </tr>
+                            <tr>
+                                <td>Organic Turmeric Powder</td>
+                                <td><span class="sku-badge sku-growing">Spices</span></td>
+                                <td><span class="trend positive">+25.3%</span></td>
+                                <td><span class="channel-badge mt">MT</span></td>
+                                <td>18,990 units</td>
+                            </tr>
+                            <tr>
+                                <td>Black Chana 500g</td>
+                                <td><span class="sku-badge sku-growing">Pulses</span></td>
+                                <td><span class="trend positive">+22.1%</span></td>
+                                <td><span class="channel-badge qc">QC</span><span class="channel-badge ecom">E-COM</span></td>
+                                <td>45,120 units</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Declining SKUs - Risk Analysis</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU Name</th>
+                                <th>Category</th>
+                                <th>Decline</th>
+                                <th>Channel Impact</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Regular Cooking Oil 1L</td>
+                                <td><span class="sku-badge sku-declining">Oils & Ghee</span></td>
+                                <td><span class="trend negative">-18.4%</span></td>
+                                <td><span class="channel-badge mt">MT</span> Heavy Impact</td>
+                                <td>Review Pricing</td>
+                            </tr>
+                            <tr>
+                                <td>White Sugar 1kg</td>
+                                <td><span class="sku-badge sku-declining">Staples</span></td>
+                                <td><span class="trend negative">-12.7%</span></td>
+                                <td><span class="channel-badge qc">QC</span> Moderate</td>
+                                <td>Promotion Campaign</td>
+                            </tr>
+                            <tr>
+                                <td>Regular Tea Powder</td>
+                                <td><span class="sku-badge sku-declining">Beverages</span></td>
+                                <td><span class="trend negative">-9.8%</span></td>
+                                <td><span class="channel-badge ecom">E-COM</span> Low Impact</td>
+                                <td>Monitor Trends</td>
+                            </tr>
+                            <tr>
+                                <td>Refined Wheat Flour</td>
+                                <td><span class="sku-badge sku-declining">Staples</span></td>
+                                <td><span class="trend negative">-8.2%</span></td>
+                                <td>All Channels</td>
+                                <td>Category Review</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Channel-wise SKU Performance Matrix</h3>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #1d4ed8;">1,234</div>
+                    <div class="stat-label">MT SKUs</div>
+                    <div class="performance-indicator indicator-high"></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #166534;">956</div>
+                    <div class="stat-label">QC SKUs</div>
+                    <div class="performance-indicator indicator-high"></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #92400e;">657</div>
+                    <div class="stat-label">E-COM SKUs</div>
+                    <div class="performance-indicator indicator-medium"></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #3b82f6;">78.5%</div>
+                    <div class="stat-label">Cross-Channel</div>
+                    <div class="performance-indicator indicator-high"></div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="performanceMatrix"></canvas>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Weekly PO Volume Trends</h3>
+                <div class="chart-container">
+                    <canvas id="weeklyTrends"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Delivery Performance by Channel</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #1e40af;">94.2%</div>
+                        <div class="stat-label">MT Delivery Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #166534;">97.8%</div>
+                        <div class="stat-label">QC Delivery Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #92400e;">91.5%</div>
+                        <div class="stat-label">E-COM Delivery Rate</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="deliveryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js configuration
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.plugins.legend.display = true;
+        Chart.defaults.plugins.legend.position = 'top';
+        
+        const chartColors = {
+            primary: '#667eea',
+            secondary: '#764ba2',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            mt: '#1e40af',
+            qc: '#166534',
+            ecom: '#92400e'
+        };
+
+        // Channel Performance Chart
+        const channelCtx = document.getElementById('channelChart').getContext('2d');
+        new Chart(channelCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                datasets: [{
+                    label: 'Modern Trade',
+                    data: [2100, 2300, 2200, 2450, 2600, 2750],
+                    borderColor: chartColors.mt,
+                    backgroundColor: chartColors.mt + '20',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Quick Commerce',
+                    data: [1800, 1950, 2100, 2250, 2400, 2520],
+                    borderColor: chartColors.qc,
+                    backgroundColor: chartColors.qc + '20',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'E-commerce',
+                    data: [1200, 1350, 1500, 1680, 1850, 1920],
+                    borderColor: chartColors.ecom,
+                    backgroundColor: chartColors.ecom + '20',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { color: '#f3f4f6' } }
+                }
+            }
+        });
+
+        // Category Growth Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Staples', 'Oils & Ghee', 'Pulses', 'Spices', 'Beverages', 'Others'],
+                datasets: [{
+                    data: [45.6, 18.2, 12.8, 10.4, 8.3, 4.7],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.warning,
+                        chartColors.success,
+                        chartColors.secondary,
+                        chartColors.danger,
+                        '#6b7280'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+
+        // Performance Matrix Chart
+        const matrixCtx = document.getElementById('performanceMatrix').getContext('2d');
+        new Chart(matrixCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Volume Growth', 'Delivery Rate', 'SKU Diversity', 'Customer Satisfaction', 'Profit Margin', 'Market Share'],
+                datasets: [{
+                    label: 'Modern Trade',
+                    data: [75, 94, 88, 82, 68, 85],
+                    borderColor: chartColors.mt,
+                    backgroundColor: chartColors.mt + '20',
+                    pointBackgroundColor: chartColors.mt
+                }, {
+                    label: 'Quick Commerce',
+                    data: [85, 98, 72, 91, 75, 78],
+                    borderColor: chartColors.qc,
+                    backgroundColor: chartColors.qc + '20',
+                    pointBackgroundColor: chartColors.qc
+                }, {
+                    label: 'E-commerce',
+                    data: [92, 91, 65, 88, 82, 70],
+                    borderColor: chartColors.ecom,
+                    backgroundColor: chartColors.ecom + '20',
+                    pointBackgroundColor: chartColors.ecom
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: '#f3f4f6' }
+                    }
+                }
+            }
+        });
+
+        // Weekly Trends Chart
+        const weeklyCtx = document.getElementById('weeklyTrends').getContext('2d');
+        new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'PO Volume (thousands)',
+                    data: [45, 52, 48, 61, 58, 39, 28],
+                    backgroundColor: chartColors.primary,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Delivery Performance Chart
+        const deliveryCtx = document.getElementById('deliveryChart').getContext('2d');
+        new Chart(deliveryCtx, {
+            type: 'bar',
+            data: {
+                labels: ['On Time', 'Delayed', 'Cancelled'],
+                datasets: [{
+                    label: 'MT',
+                    data: [94.2, 4.8, 1.0],
+                    backgroundColor: chartColors.mt
+                }, {
+                    label: 'QC',
+                    data: [97.8, 1.8, 0.4],
+                    backgroundColor: chartColors.qc
+                }, {
+                    label: 'E-COM',
+                    data: [91.5, 6.2, 2.3],
+                    backgroundColor: chartColors.ecom
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Add interactivity to filters
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function() {
+                console.log(`Filter changed: ${this.id} = ${this.value}`);
+                // Here you would typically update the charts and data
+                // For demo purposes, we'll just log the change
+            });
+        });
+
+        // Add hover effects to metric cards
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.background = 'white';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.background = 'white';
+            });
+        });
+    </script>
+</body>
+</html>
