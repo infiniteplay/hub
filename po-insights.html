@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiniFi - Customer PO Insights</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        
+        .dashboard-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-left: 2rem;
+        }
+        
+        .date-filter {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .container {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        .data-table th {
+            background: #f8fafc;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .trend-up {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .trend-down {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .trend-stable {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .sku-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .sku-item:last-child {
+            border-bottom: none;
+        }
+        
+        .sku-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .sku-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        
+        .sku-brand {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        .sku-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+        }
+        
+        .sku-quantity {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .sku-value {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .warning-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f59e0b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .date-filter {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; align-items: center;">
+            <div class="logo">
+                <img src="Finifi Logo.png" alt="FiniFi Logo" style="height: 25px;">
+            </div>
+            <div class="dashboard-title">Customer PO Insights</div>
+        </div>
+        <div class="date-filter">
+            <button class="filter-btn">Today</button>
+            <button class="filter-btn">7 Days</button>
+            <button class="filter-btn active">30 Days</button>
+            <button class="filter-btn">90 Days</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="warning-banner">
+            <div class="warning-icon">!</div>
+            <div>
+                <strong>Attention Required:</strong> 23 POs expiring this week, 34 price mismatches detected, and 58 unmapped items need immediate action.
+            </div>
+        </div>
+        
+        <div class="analytics-grid">
+            
+            <!-- Top Customers -->
+            <div class="chart-card">
+                <div class="chart-title">Top Customers by PO Volume</div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>POs</th>
+                                <th>Amount</th>
+                                <th>Delivery Rate</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>BigBasket Warehouse</td>
+                                <td>156</td>
+                                <td>₹45.2L</td>
+                                <td>94%</td>
+                                <td><span class="trend-indicator trend-up">↗ +12%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Cash N Carry - Jalandhar</td>
+                                <td>89</td>
+                                <td>₹32.1L</td>
+                                <td>91%</td>
+                                <td><span class="trend-indicator trend-up">↗ +8%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Warehouse No 1. Sahib</td>
+                                <td>67</td>
+                                <td>₹28.7L</td>
+                                <td>88%</td>
+                                <td><span class="trend-indicator trend-stable">→ 0%</span></td>
+                            </tr>
+                            <tr>
+                                <td>SND Warehousing Complex</td>
+                                <td>54</td>
+                                <td>₹19.8L</td>
+                                <td>85%</td>
+                                <td><span class="trend-indicator trend-down">↘ -5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>SCOOTSY LOGISTICS</td>
+                                <td>43</td>
+                                <td>₹16.4L</td>
+                                <td>92%</td>
+                                <td><span class="trend-indicator trend-up">↗ +15%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Top Undelivered SKUs -->
+            <div class="chart-card">
+                <div class="chart-title">Top Undelivered SKUs</div>
+                <div class="chart-subtitle">Items requiring attention</div>
+                <div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Fortune Soyabean Oil 1L</div>
+                            <div class="sku-brand">Adani Wilmar • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">234 units</div>
+                            <div class="sku-value">₹2.8L pending</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Maggi Noodles 2-Min 70g</div>
+                            <div class="sku-brand">Nestle • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">189 units</div>
+                            <div class="sku-value">₹1.9L pending</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Britannia Good Day Cookies</div>
+                            <div class="sku-brand">Britannia • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">156 units</div>
+                            <div class="sku-value">₹1.2L pending</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Tata Salt 1kg</div>
+                            <div class="sku-brand">Tata Consumer • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">143 units</div>
+                            <div class="sku-value">₹0.8L pending</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Amul Butter 100g</div>
+                            <div class="sku-brand">Amul • Dairy</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">128 units</div>
+                            <div class="sku-value">₹0.9L pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Delivered SKUs -->
+            <div class="chart-card">
+                <div class="chart-title">Top Delivered SKUs</div>
+                <div class="chart-subtitle">Best performing items</div>
+                <div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Surf Excel Liquid 1L</div>
+                            <div class="sku-brand">Hindustan Unilever • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">567 units</div>
+                            <div class="sku-value">₹8.2L delivered</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Coca Cola 250ml Can</div>
+                            <div class="sku-brand">Coca Cola • Beverages</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">489 units</div>
+                            <div class="sku-value">₹4.9L delivered</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Parle G Biscuits 100g</div>
+                            <div class="sku-brand">Parle • FMCG</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">423 units</div>
+                            <div class="sku-value">₹2.1L delivered</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Colgate Toothpaste 200g</div>
+                            <div class="sku-brand">Colgate • Personal Care</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">398 units</div>
+                            <div class="sku-value">₹3.8L delivered</div>
+                        </div>
+                    </div>
+                    <div class="sku-item">
+                        <div class="sku-info">
+                            <div class="sku-name">Lux Soap 125g</div>
+                            <div class="sku-brand">Hindustan Unilever • Personal Care</div>
+                        </div>
+                        <div class="sku-stats">
+                            <div class="sku-quantity">345 units</div>
+                            <div class="sku-value">₹1.7L delivered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Unmapped Items Analysis -->
+            <div class="chart-card">
+                <div class="chart-title">Unmapped Items Breakdown</div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Count</th>
+                                <th>Impact</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Item Master</td>
+                                <td>34</td>
+                                <td>₹8.9L</td>
+                                <td><button style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Map Items</button></td>
+                            </tr>
+                            <tr>
+                                <td>Customer Master</td>
+                                <td>15</td>
+                                <td>₹4.2L</td>
+                                <td><button style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Add Customer</button></td>
+                            </tr>
+                            <tr>
+                                <td>Warehouse Master</td>
+                                <td>9</td>
+                                <td>₹2.1L</td>
+                                <td><button style="background: #10b981; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Add Location</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <script>
+        // TAT Distribution Chart
+        const tatCtx = document.getElementById('tatChart').getContext('2d');
+        new Chart(tatCtx, {
+            type: 'bar',
+            data: {
+                labels: ['< 1 Day', '1-2 Days', '2-3 Days', '3-5 Days', '> 5 Days'],
+                datasets: [{
+                    label: 'Number of POs',
+                    data: [89, 342, 456, 267, 93],
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#7c3aed'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of POs'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Turnaround Time'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Processing Efficiency Chart
+        const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+        const last7Days = [];
+        const receivedData = [];
+        const fulfilledData = [];
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            last7Days.push(date.toLocaleDateString('en-IN', { weekday: 'short' }));
+            const received = Math.floor(Math.random() * 20) + 35;
+            receivedData.push(received);
+            fulfilledData.push(Math.floor(received * (0.75 + Math.random() * 0.2)));
+        }
+        
+        new Chart(efficiencyCtx, {
+            type: 'line',
+            data: {
+                labels: last7Days,
+                datasets: [{
+                    label: 'POs Received',
+                    data: receivedData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'POs Fulfilled',
+                    data: fulfilledData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Brand Performance Chart
+        const brandCtx = document.getElementById('brandChart').getContext('2d');
+        new Chart(brandCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Hindustan Unilever',
+                    data: [234, 245, 267, 289],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Nestle',
+                    data: [156, 167, 145, 178],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Britannia',
+                    data: [89, 98, 112, 134],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Tata Consumer',
+                    data: [67, 78, 89, 95],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Coca Cola',
+                    data: [123, 134, 128, 142],
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Units Delivered'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Mismatch Chart
+        const mismatchCtx = document.getElementById('mismatchChart').getContext('2d');
+        new Chart(mismatchCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Price Mismatch', 'Tax Mismatch', 'Margin Mismatch'],
+                datasets: [{
+                    data: [34, 18, 12],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#ec4899'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Filter button functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // Here you would typically reload data based on the selected period
+            });
+        });
+    </script>
+</body>
+</html>
+                
