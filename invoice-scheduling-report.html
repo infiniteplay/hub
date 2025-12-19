@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Scheduling Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Invoice Scheduling Report</h1>
+                <p class="text-gray-600">Track scheduled, unscheduled, and missed dispatch invoices</p>
+            </div>
+
+            <!-- Date Filter -->
+            <div class="bg-white rounded-lg shadow mb-6 p-4">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                        <input type="date" id="fromDate" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                        <input type="date" id="toDate" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="filterReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            Apply Filter
+                        </button>
+                    </div>
+                    <div class="flex items-end ml-auto">
+                        <button onclick="exportReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                            Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <!-- Total Invoices -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Total Invoices</p>
+                            <p id="totalInvoices" class="text-3xl font-bold text-gray-800">0</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scheduled -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Scheduled</p>
+                            <p id="scheduledCount" class="text-3xl font-bold text-green-600">0</p>
+                            <p id="scheduledPercent" class="text-xs text-gray-500 mt-1">0% of total</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unscheduled -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Unscheduled</p>
+                            <p id="unscheduledCount" class="text-3xl font-bold text-orange-600">0</p>
+                            <p id="unscheduledPercent" class="text-xs text-gray-500 mt-1">0% of total</p>
+                        </div>
+                        <div class="bg-orange-100 p-3 rounded-lg">
+                            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Missed Dispatch -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Missed Dispatch</p>
+                            <p id="missedCount" class="text-3xl font-bold text-red-600">0</p>
+                            <p id="missedPercent" class="text-xs text-gray-500 mt-1">0% of scheduled</p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-lg">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="border-b border-gray-200">
+                    <div class="flex">
+                        <button onclick="switchTab('scheduled')" id="tabScheduled" class="px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                            Scheduled Invoices
+                        </button>
+                        <button onclick="switchTab('unscheduled')" id="tabUnscheduled" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Unscheduled Invoices
+                        </button>
+                        <button onclick="switchTab('missed')" id="tabMissed" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Missed Dispatch
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scheduled Invoices Table -->
+                <div id="scheduledContent" class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Invoice No</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">PO Number</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Appointment ID</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Scheduled Date</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Slot</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Quantity</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduledTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Unscheduled Invoices Table -->
+                <div id="unscheduledContent" class="p-6 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Invoice No</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">PO Number</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Invoice Date</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Total Quantity</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Pending Quantity</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Days Pending</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unscheduledTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Missed Dispatch Table -->
+                <div id="missedContent" class="p-6 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Invoice No</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">PO Number</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Appointment ID</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Scheduled Date</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Slot</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Quantity</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Days Overdue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="missedTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - replace with your actual data
+        const invoices = [
+            {
+                invoiceNo: 'INV-2024-001',
+                poNumber: 'p2342',
+                invoiceDate: new Date(2024, 11, 1),
+                totalQuantity: 96,
+                appointments: [
+                    {
+                        appointmentId: 'AP0000000003',
+                        scheduledDate: new Date(2024, 11, 5),
+                        timeSlot: '10:00 - 12:00',
+                        quantity: 30,
+                        dispatched: true
+                    },
+                    {
+                        appointmentId: 'AP0000000004',
+                        scheduledDate: new Date(2024, 11, 3),
+                        timeSlot: '14:00 - 16:00',
+                        quantity: 30,
+                        dispatched: false
+                    }
+                ]
+            },
+            {
+                invoiceNo: 'INV-2024-002',
+                poNumber: 'p2343',
+                invoiceDate: new Date(2024, 11, 2),
+                totalQuantity: 120,
+                appointments: []
+            },
+            {
+                invoiceNo: 'INV-2024-003',
+                poNumber: 'p2344',
+                invoiceDate: new Date(2024, 11, 3),
+                totalQuantity: 80,
+                appointments: [
+                    {
+                        appointmentId: 'AP0000000005',
+                        scheduledDate: new Date(2024, 11, 6),
+                        timeSlot: '09:00 - 11:00',
+                        quantity: 40,
+                        dispatched: true
+                    },
+                    {
+                        appointmentId: 'AP0000000006',
+                        scheduledDate: new Date(2024, 11, 7),
+                        timeSlot: '11:00 - 13:00',
+                        quantity: 40,
+                        dispatched: true
+                    }
+                ]
+            },
+            {
+                invoiceNo: 'INV-2024-004',
+                poNumber: 'p2345',
+                invoiceDate: new Date(2024, 10, 28),
+                totalQuantity: 150,
+                appointments: []
+            },
+            {
+                invoiceNo: 'INV-2024-005',
+                poNumber: 'p2346',
+                invoiceDate: new Date(2024, 11, 4),
+                totalQuantity: 65,
+                appointments: [
+                    {
+                        appointmentId: 'AP0000000007',
+                        scheduledDate: new Date(2024, 11, 2),
+                        timeSlot: '15:00 - 17:00',
+                        quantity: 65,
+                        dispatched: false
+                    }
+                ]
+            }
+        ];
+
+        function calculateDaysDifference(date) {
+            const today = new Date();
+            const diffTime = today - date;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function getScheduledInvoices() {
+            return invoices.filter(inv => inv.appointments.length > 0);
+        }
+
+        function getUnscheduledInvoices() {
+            return invoices.filter(inv => {
+                const scheduledQty = inv.appointments.reduce((sum, apt) => sum + apt.quantity, 0);
+                return scheduledQty < inv.totalQuantity;
+            });
+        }
+
+        function getMissedDispatchAppointments() {
+            const missed = [];
+            const today = new Date();
+            
+            invoices.forEach(inv => {
+                inv.appointments.forEach(apt => {
+                    if (!apt.dispatched && apt.scheduledDate < today) {
+                        missed.push({
+                            ...apt,
+                            invoiceNo: inv.invoiceNo,
+                            poNumber: inv.poNumber
+                        });
+                    }
+                });
+            });
+            
+            return missed;
+        }
+
+        function updateSummaryCards() {
+            const total = invoices.length;
+            const scheduled = getScheduledInvoices().length;
+            const unscheduled = getUnscheduledInvoices().length;
+            const missed = getMissedDispatchAppointments().length;
+            
+            document.getElementById('totalInvoices').textContent = total;
+            document.getElementById('scheduledCount').textContent = scheduled;
+            document.getElementById('scheduledPercent').textContent = `${Math.round((scheduled / total) * 100)}% of total`;
+            
+            document.getElementById('unscheduledCount').textContent = unscheduled;
+            document.getElementById('unscheduledPercent').textContent = `${Math.round((unscheduled / total) * 100)}% of total`;
+            
+            const totalScheduledAppointments = invoices.reduce((sum, inv) => sum + inv.appointments.length, 0);
+            document.getElementById('missedCount').textContent = missed;
+            document.getElementById('missedPercent').textContent = totalScheduledAppointments > 0 
+                ? `${Math.round((missed / totalScheduledAppointments) * 100)}% of scheduled`
+                : '0% of scheduled';
+        }
+
+        function renderScheduledTable() {
+            const tbody = document.getElementById('scheduledTableBody');
+            tbody.innerHTML = '';
+            
+            invoices.forEach(inv => {
+                if (inv.appointments.length === 0) return;
+                
+                inv.appointments.forEach(apt => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-100 hover:bg-gray-50';
+                    
+                    const statusClass = apt.dispatched 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-purple-100 text-purple-800';
+                    const statusText = apt.dispatched ? 'Dispatched' : 'Scheduled';
+                    
+                    row.innerHTML = `
+                        <td class="py-3 px-4 text-sm text-gray-800">${inv.invoiceNo}</td>
+                        <td class="py-3 px-4 text-sm text-gray-800">${inv.poNumber}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">${apt.appointmentId}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">${apt.scheduledDate.toLocaleDateString()}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">${apt.timeSlot}</td>
+                        <td class="py-3 px-4 text-sm text-gray-800 font-medium">${apt.quantity}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function renderUnscheduledTable() {
+            const tbody = document.getElementById('unscheduledTableBody');
+            tbody.innerHTML = '';
+            
+            const unscheduled = getUnscheduledInvoices();
+            
+            unscheduled.forEach(inv => {
+                const scheduledQty = inv.appointments.reduce((sum, apt) => sum + apt.quantity, 0);
+                const pendingQty = inv.totalQuantity - scheduledQty;
+                const daysPending = calculateDaysDifference(inv.invoiceDate);
+                
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 hover:bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-sm text-gray-800">${inv.invoiceNo}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${inv.poNumber}</td>
+                    <td class="py-3 px-4 text-sm text-gray-600">${inv.invoiceDate.toLocaleDateString()}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${inv.totalQuantity}</td>
+                    <td class="py-3 px-4 text-sm text-orange-600 font-medium">${pendingQty}</td>
+                    <td class="py-3 px-4 text-sm ${daysPending > 3 ? 'text-red-600' : 'text-gray-600'} font-medium">${daysPending} days</td>
+                    <td class="py-3 px-4">
+                        <button class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">
+                            Schedule
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderMissedTable() {
+            const tbody = document.getElementById('missedTableBody');
+            tbody.innerHTML = '';
+            
+            const missed = getMissedDispatchAppointments();
+            
+            missed.forEach(apt => {
+                const daysOverdue = calculateDaysDifference(apt.scheduledDate);
+                
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 hover:bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-sm text-gray-800">${apt.invoiceNo}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${apt.poNumber}</td>
+                    <td class="py-3 px-4 text-sm text-gray-600">${apt.appointmentId}</td>
+                    <td class="py-3 px-4 text-sm text-gray-600">${apt.scheduledDate.toLocaleDateString()}</td>
+                    <td class="py-3 px-4 text-sm text-gray-600">${apt.timeSlot}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800 font-medium">${apt.quantity}</td>
+                    <td class="py-3 px-4 text-sm text-red-600 font-bold">${daysOverdue} days</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.getElementById('tabScheduled').className = 'px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700';
+            document.getElementById('tabUnscheduled').className = 'px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700';
+            document.getElementById('tabMissed').className = 'px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700';
+            
+            // Hide all content
+            document.getElementById('scheduledContent').classList.add('hidden');
+            document.getElementById('unscheduledContent').classList.add('hidden');
+            document.getElementById('missedContent').classList.add('hidden');
+            
+            // Show selected content
+            if (tab === 'scheduled') {
+                document.getElementById('tabScheduled').className = 'px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600';
+                document.getElementById('scheduledContent').classList.remove('hidden');
+            } else if (tab === 'unscheduled') {
+                document.getElementById('tabUnscheduled').className = 'px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600';
+                document.getElementById('unscheduledContent').classList.remove('hidden');
+            } else if (tab === 'missed') {
+                document.getElementById('tabMissed').className = 'px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600';
+                document.getElementById('missedContent').classList.remove('hidden');
+            }
+        }
+
+        function filterReport() {
+            // Add your filter logic here
+            alert('Filter functionality - connect to your backend');
+        }
+
+        function exportReport() {
+            // Add your export logic here
+            alert('Export functionality - implement CSV/Excel export');
+        }
+
+        // Initialize report
+        updateSummaryCards();
+        renderScheduledTable();
+        renderUnscheduledTable();
+        renderMissedTable();
+
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('toDate').valueAsDate = today;
+        document.getElementById('fromDate').valueAsDate = thirtyDaysAgo;
+    </script>
+</body>
+</html>
