@@ -63,10 +63,17 @@ body {
     <div class="min-h-screen p-6">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
-            <div class="logo">
-             <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
-             <span class="hub-title">PO Performance Report</span>
-            </div>
+        <header>
+        <div class="logo">
+            <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
+            <span class="hub-title">PO Performance Report</span>
+        </div>
+        <div class="header-buttons">
+            <button onclick="window.location.href='index.html'">Go Back</button>
+            <button onclick="location.reload()">Refresh</button>
+            <button onclick="exportDashboard()">Export</button>
+        </div>
+        </header>
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">Invoice Scheduling Report</h1>
                 <p class="text-gray-600">Track scheduled, unscheduled, and missed dispatch invoices</p>
