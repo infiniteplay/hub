@@ -5,11 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Scheduling Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
+  
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+}
+
+body {
+  padding-top: 70px; /* prevents content from hiding behind fixed header */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.hub-title {
+  color: #000; /* black text for "Dashboard Hub" */
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.header-buttons button:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen p-6">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
+            <div class="logo">
+             <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
+             <span class="hub-title">PO Performance Report</span>
+            </div>
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">Invoice Scheduling Report</h1>
                 <p class="text-gray-600">Track scheduled, unscheduled, and missed dispatch invoices</p>
