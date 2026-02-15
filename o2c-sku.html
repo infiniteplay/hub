@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order to Cash — Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white:    #ffffff;
+      --bg:       #f4f5f7;
+      --surface:  #ffffff;
+      --border:   #e4e6ea;
+      --border-2: #d0d3da;
+      --t1:       #111318;
+      --t2:       #4b5060;
+      --t3:       #9098a8;
+      --accent:   #1a56db;
+      --accent-bg:#eff4ff;
+      --red:      #c0392b;
+      --red-bg:   #fdf2f2;
+      --green:    #1a6b3c;
+      --green-bg: #f0faf4;
+      --amber:    #92600a;
+      --amber-bg: #fef9ef;
+      --sans:     'IBM Plex Sans', sans-serif;
+      --mono:     'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: var(--sans); font-size: 13px; color: var(--t1); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+    /* TOPBAR */
+    .topbar { position: fixed; top: 0; left: 0; right: 0; height: 48px; background: var(--t1); display: flex; align-items: center; padding: 0 20px; gap: 16px; z-index: 200; }
+    .tb-brand { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: -0.2px; }
+    .tb-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.15); }
+    .tb-title { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .tb-acts { margin-left: auto; display: flex; gap: 8px; }
+    .tb-btn { font-family: var(--sans); font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.16); background: transparent; color: rgba(255,255,255,0.65); transition: background 0.12s, color 0.12s; }
+    .tb-btn:hover { background: rgba(255,255,255,0.09); color: #fff; }
+    .tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tb-btn.primary:hover { background: #1448c0; }
+
+    /* LAYOUT */
+    .layout { display: flex; flex-direction: column; padding-top: 48px; height: 100vh; overflow: hidden; }
+
+    /* CONTROLS */
+    .ctrl-bar { background: var(--surface); border-bottom: 1px solid var(--border); height: 44px; display: flex; align-items: center; padding: 0 20px; gap: 10px; flex-shrink: 0; }
+    .c-lbl { font-size: 11px; font-weight: 500; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .c-in, .c-sel { font-family: var(--sans); font-size: 12px; color: var(--t1); padding: 0 10px; height: 28px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); outline: none; transition: border-color 0.12s; }
+    .c-in:focus, .c-sel:focus { border-color: var(--accent); background: var(--white); }
+    .c-in[type="date"] { width: 120px; }
+    .c-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+    .srch { position: relative; margin-left: auto; }
+    .srch svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--t3); pointer-events: none; }
+    .srch-in { font-family: var(--sans); font-size: 12px; color: var(--t1); padding: 0 10px 0 30px; height: 28px; width: 210px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); outline: none; transition: border-color 0.12s, width 0.18s; }
+    .srch-in:focus { border-color: var(--accent); background: var(--white); width: 250px; }
+
+    /* KPI */
+    .kpi-strip { background: var(--surface); border-bottom: 1px solid var(--border); height: 68px; display: flex; align-items: stretch; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+    .kpi-strip::-webkit-scrollbar { display: none; }
+    .kpi-item { flex: 1 0 110px; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; border-right: 1px solid var(--border); }
+    .kpi-item:last-child { border-right: none; }
+    .kv { font-size: 20px; font-weight: 600; color: var(--t1); line-height: 1; white-space: nowrap; }
+    .kv.a { color: var(--accent); } .kv.r { color: var(--red); } .kv.g { color: var(--green); } .kv.m { color: var(--amber); }
+    .kl { font-size: 10px; font-weight: 500; color: var(--t3); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+
+    /* TABS */
+    .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); height: 40px; display: flex; align-items: stretch; padding: 0 20px; flex-shrink: 0; }
+    .tab-btn { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--t3); background: none; border: none; padding: 0 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.12s, border-color 0.12s; white-space: nowrap; }
+    .tab-btn:hover { color: var(--t2); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* PANELS */
+    .panel { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    .panel.active { display: flex; }
+
+    /* TABLE WRAP */
+    .t-wrap { flex: 1; overflow: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+    .t-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+    .t-wrap::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    /* TABLE */
+    table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12px; }
+
+    /* Group header */
+    thead tr.grp th {
+      position: sticky; top: 0; z-index: 30;
+      height: 26px; padding: 0 12px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+      color: var(--t3); background: #f8f9fb;
+      border-bottom: 1px solid var(--border); border-right: 1px solid var(--border);
+      text-align: left; white-space: nowrap;
+    }
+    thead tr.grp th.gs { border-left: 2px solid var(--border-2); }
+
+    /* Col header */
+    thead tr.cols th {
+      position: sticky; top: 26px; z-index: 29;
+      height: 32px; padding: 0 12px;
+      font-size: 11px; font-weight: 500; color: var(--t2);
+      background: #f8f9fb;
+      border-bottom: 2px solid var(--border-2); border-right: 1px solid var(--border);
+      white-space: nowrap; text-align: left;
+      cursor: pointer; user-select: none;
+    }
+    thead tr.cols th:hover { color: var(--t1); background: #f0f2f6; }
+    thead tr.cols th.sorted { color: var(--accent); }
+    thead tr.cols th.sorted::after { content: attr(data-dir); margin-left: 3px; font-size: 9px; }
+    thead tr.cols th.gs { border-left: 2px solid var(--border-2); }
+    thead tr.cols th.no-sort { cursor: default; }
+    thead tr.cols th.no-sort:hover { background: #f8f9fb; color: var(--t2); }
+
+    /* Body rows */
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.07s; }
+    tbody tr:hover td { background: #f5f8ff; }
+
+    /* PO group boundary — thick top border on first row of each PO */
+    tbody tr.po-first td { border-top: 2px solid var(--border-2); }
+    tbody tr.po-first:first-child td { border-top: none; }
+
+    /* Invoice group — subtle bg alternation */
+    tbody tr.inv-odd  td { background: #ffffff; }
+    tbody tr.inv-even td { background: #fafbfc; }
+    tbody tr:hover td { background: #f0f5ff !important; }
+
+    td {
+      height: 36px; padding: 0 12px;
+      border-right: 1px solid var(--border);
+      vertical-align: middle; white-space: nowrap;
+    }
+    td:last-child { border-right: none; }
+    td.gs { border-left: 2px solid var(--border-2); }
+
+    /* Rowspan cells (PO / Invoice groups) */
+    td.span-cell {
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border-2);
+      background: inherit;
+    }
+
+    /* Cell types */
+    .mn   { font-family: var(--mono); font-size: 11px; }
+    .t2   { color: var(--t2); }
+    .t3   { color: var(--t3); font-size: 11px; }
+    .lnk  { color: var(--accent); cursor: pointer; font-weight: 500; }
+    .lnk:hover { text-decoration: underline; }
+    .nr   { text-align: right; font-variant-numeric: tabular-nums; }
+    .bd   { font-weight: 600; }
+    .neg  { color: var(--red); font-weight: 500; }
+    .pos  { color: var(--green); font-weight: 500; }
+    .sku-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Badges */
+    .bg { display: inline-block; font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 3px; white-space: nowrap; }
+    .b-gr { background: var(--green-bg); color: var(--green); }
+    .b-re { background: var(--red-bg);   color: var(--red);   }
+    .b-am { background: var(--amber-bg); color: var(--amber); }
+    .b-bl { background: var(--accent-bg);color: var(--accent);}
+    .b-gy { background: #f2f3f5;         color: var(--t3);    }
+
+    /* Channel */
+    .ch { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ch-mt { background: #edf2ff; color: #3b5bdb; }
+    .ch-qc { background: #ebfbee; color: #2f9e44; }
+    .ch-ec { background: #fff0f6; color: #c2255c; }
+
+    /* Pager */
+    .pager { background: var(--surface); border-top: 1px solid var(--border); height: 40px; display: flex; align-items: center; padding: 0 20px; gap: 6px; flex-shrink: 0; }
+    .pi { font-size: 11px; color: var(--t3); margin-right: auto; }
+    .pb { font-family: var(--sans); font-size: 11px; font-weight: 500; height: 26px; padding: 0 10px; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; background: var(--white); color: var(--t2); transition: all 0.1s; }
+    .pb:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pb.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pb:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .emp td { color: var(--t3); text-align: center; padding: 48px; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="tb-brand">Finifi Hub</span>
+  <div class="tb-sep"></div>
+  <span class="tb-title">Order to Cash Tracker</span>
+  <div class="tb-acts">
+    <button class="tb-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="tb-btn primary" onclick="applyFilters()">Refresh</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="ctrl-bar">
+    <span class="c-lbl">Date</span>
+    <input type="date" class="c-in" id="dtFrom" value="2025-01-01">
+    <span class="c-lbl" style="color:var(--t3)">to</span>
+    <input type="date" class="c-in" id="dtTo" value="2025-03-31">
+    <div class="c-sep"></div>
+    <span class="c-lbl">Channel</span>
+    <select class="c-sel" id="selCh" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="MT">Modern Trade</option>
+      <option value="QC">Quick Commerce</option>
+      <option value="EC">Ecommerce</option>
+    </select>
+    <span class="c-lbl">Customer</span>
+    <select class="c-sel" id="selCust" onchange="applyFilters()">
+      <option value="">All Customers</option>
+    </select>
+    <span class="c-lbl">Status</span>
+    <select class="c-sel" id="selSt" onchange="applyFilters()">
+      <option value="">All Statuses</option>
+      <option value="Open">Open</option>
+      <option value="Invoiced">Invoiced</option>
+      <option value="GRN Done">GRN Done</option>
+      <option value="Disputed">Disputed</option>
+      <option value="Paid">Paid</option>
+    </select>
+    <div class="srch">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="srch-in" id="srch" type="text" placeholder="Search PO, customer, SKU, invoice…" oninput="applyFilters()">
+    </div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi-item"><div class="kv a" id="k-po">—</div><div class="kl">Purchase Orders</div></div>
+    <div class="kpi-item"><div class="kv" id="k-inv">—</div><div class="kl">Invoices</div></div>
+    <div class="kpi-item"><div class="kv" id="k-sku">—</div><div class="kl">SKU Lines</div></div>
+    <div class="kpi-item"><div class="kv" id="k-asn">—</div><div class="kl">ASNs</div></div>
+    <div class="kpi-item"><div class="kv" id="k-grn">—</div><div class="kl">GRNs</div></div>
+    <div class="kpi-item"><div class="kv r" id="k-dn">—</div><div class="kl">Debit Notes</div></div>
+    <div class="kpi-item"><div class="kv m" id="k-di">—</div><div class="kl">Total Discrepancy</div></div>
+    <div class="kpi-item"><div class="kv g" id="k-pa">—</div><div class="kl">Payment Received</div></div>
+    <div class="kpi-item"><div class="kv r" id="k-pe">—</div><div class="kl">Payment Pending</div></div>
+    <div class="kpi-item"><div class="kv" id="k-cy">—</div><div class="kl">Avg Cycle Days</div></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('main',this)">Detailed Tracker</button>
+    <button class="tab-btn" onclick="switchTab('debit',this)">Debit Notes</button>
+    <button class="tab-btn" onclick="switchTab('pay',this)">Payment Advice</button>
+  </div>
+
+  <!-- DETAILED TRACKER -->
+  <div id="p-main" class="panel active">
+    <div class="t-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr class="grp">
+            <th colspan="4">Customer Information</th>
+            <th colspan="5" class="gs">Purchase Order</th>
+            <th colspan="5" class="gs">Sales Order</th>
+            <th colspan="6" class="gs">Invoice</th>
+            <th colspan="4" class="gs">Dispatch</th>
+            <th colspan="6" class="gs">GRN</th>
+            <th colspan="7" class="gs">Debit Note</th>
+            <th colspan="5" class="gs">RTV</th>
+            <th colspan="5" class="gs">Payment Advice</th>
+            <th colspan="5" class="gs">Credit Note</th>
+            <th colspan="4" class="gs">Payment Posted</th>
+          </tr>
+          <tr class="cols">
+            <!-- Customer -->
+            <th onclick="srt('customer',this)">Customer</th>
+            <th onclick="srt('channel',this)">Channel</th>
+            <th onclick="srt('articleNo',this)">Article No</th>
+            <th onclick="srt('skuName',this)">SKU Description</th>
+            <!-- PO -->
+            <th class="gs" onclick="srt('poNo',this)">PO No</th>
+            <th onclick="srt('poDate',this)">PO Date</th>
+            <th class="nr" onclick="srt('poQty',this)">PO Qty</th>
+            <th class="nr" onclick="srt('poPrice',this)">Base Price</th>
+            <th class="nr" onclick="srt('poValue',this)">PO Value</th>
+            <!-- SO -->
+            <th class="gs" onclick="srt('soNo',this)">SO No</th>
+            <th onclick="srt('soDate',this)">SO Date</th>
+            <th class="nr" onclick="srt('soQty',this)">SO Qty</th>
+            <th class="nr">SO Price</th>
+            <th class="nr">GST%</th>
+            <!-- Invoice -->
+            <th class="gs" onclick="srt('invNo',this)">Invoice No</th>
+            <th onclick="srt('invDate',this)">Invoice Date</th>
+            <th class="nr" onclick="srt('invQty',this)">Inv Qty</th>
+            <th class="nr">Inv Price</th>
+            <th class="nr">GST%</th>
+            <th class="nr" onclick="srt('invValue',this)">Inv Value</th>
+            <!-- Dispatch -->
+            <th class="gs" onclick="srt('asn',this)">ASN No</th>
+            <th onclick="srt('lrNo',this)">LR No</th>
+            <th onclick="srt('dispDate',this)">Dispatch Date</th>
+            <th onclick="srt('podDate',this)">POD Date</th>
+            <!-- GRN -->
+            <th class="gs" onclick="srt('grnDate',this)">GRN Date</th>
+            <th class="nr" onclick="srt('grnQty',this)">GRN Qty</th>
+            <th class="nr">GRN Value</th>
+            <th onclick="srt('grnRef',this)">GRN Ref</th>
+            <th onclick="srt('grnNum',this)">GRN No</th>
+            <th class="nr" onclick="srt('grnDiffQty',this)">Diff Qty</th>
+            <!-- Debit Note -->
+            <th class="gs" onclick="srt('debitNoteNo',this)">Debit Note No</th>
+            <th class="nr">DN Qty</th>
+            <th class="nr">DN Price</th>
+            <th class="nr">GST%</th>
+            <th class="nr">DN Value</th>
+            <th class="nr">Diff Qty</th>
+            <th class="nr">Diff Value</th>
+            <!-- RTV -->
+            <th class="gs">RTV Note No</th>
+            <th class="nr">Qty</th>
+            <th class="nr">Price</th>
+            <th class="nr">GST%</th>
+            <th class="nr">Value</th>
+            <!-- Payment Advice -->
+            <th class="gs" onclick="srt('payDate',this)">Payment Date</th>
+            <th class="nr" onclick="srt('payAmount',this)">Amount</th>
+            <th>UTR No</th>
+            <th>Payment T No</th>
+            <th>Pay No</th>
+            <!-- Credit Note -->
+            <th class="gs">Type</th>
+            <th class="nr">Qty</th>
+            <th class="nr">Value</th>
+            <th>UTR No</th>
+            <th>Credit Note No</th>
+            <!-- Payment Posted -->
+            <th class="gs" onclick="srt('ppDate',this)">Payment Date</th>
+            <th class="nr" onclick="srt('ppAmount',this)">Amount</th>
+            <th>UTR No</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody id="tb-main"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="pi" id="pg-info"></span>
+      <div id="pg-btns" style="display:flex;gap:4px;"></div>
+    </div>
+  </div>
+
+  <!-- DEBIT NOTES -->
+  <div id="p-debit" class="panel">
+    <div class="t-wrap">
+      <table>
+        <thead>
+          <tr class="grp">
+            <th colspan="5">Customer / SKU</th>
+            <th colspan="2" class="gs">PO</th>
+            <th colspan="2" class="gs">Invoice</th>
+            <th colspan="7" class="gs">Debit Note Detail</th>
+            <th colspan="3" class="gs">GRN Reference</th>
+          </tr>
+          <tr class="cols">
+            <th>Customer</th><th>Channel</th><th>Article No</th><th>SKU Description</th><th>Status</th>
+            <th class="gs">PO No</th><th>PO Date</th>
+            <th class="gs">Invoice No</th><th>Invoice Date</th>
+            <th class="gs">Debit Note No</th><th>Date</th>
+            <th class="nr">Qty</th><th class="nr">Price</th><th class="nr">GST%</th><th class="nr">Value</th><th>Reason</th>
+            <th class="gs">GRN No</th><th class="nr">GRN Qty</th><th class="nr">Diff Qty</th>
+          </tr>
+        </thead>
+        <tbody id="tb-debit"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENT ADVICE -->
+  <div id="p-pay" class="panel">
+    <div class="t-wrap">
+      <table>
+        <thead>
+          <tr class="grp">
+            <th colspan="3">Customer</th>
+            <th colspan="3" class="gs">Invoice</th>
+            <th colspan="5" class="gs">Payment Advice</th>
+            <th colspan="4" class="gs">Credit Note</th>
+            <th colspan="3" class="gs">Payment Posted</th>
+          </tr>
+          <tr class="cols">
+            <th>Customer</th><th>Channel</th><th>PO No</th>
+            <th class="gs">Invoice No</th><th>Invoice Date</th><th class="nr">Invoice Value</th>
+            <th class="gs">Payment Date</th><th class="nr">Amount</th><th>UTR No</th><th>Payment T No</th><th>Pay No</th>
+            <th class="gs">Type</th><th class="nr">Qty</th><th class="nr">Value</th><th>Credit Note No</th>
+            <th class="gs">Posted Date</th><th class="nr">Posted Amount</th><th>Posted UTR</th>
+          </tr>
+        </thead>
+        <tbody id="tb-pay"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  DATA MODEL
+//  PO → invoices[] → skuLines[]
+//
+//  Each PO has:
+//    - poNo, poDate, customer, channel
+//    - invoices: array of invoice groups
+//      Each invoice has:
+//        - invNo, invDate, soNo, soDate, asn, lrNo, dispDate, podDate
+//        - grnDate, grnRef, grnNum
+//        - payDate, payAmount, payUtrNo, paymentTNo, payNo
+//        - ppDate, ppAmount, ppUtrNo, ppRef
+//        - skuLines: array (one row per SKU)
+//          Each skuLine has:
+//            - articleNo, skuName, hsnCode
+//            - poQty, poPrice, poGst, poValue
+//            - soQty, soPrice, soGst
+//            - invQty, invPrice, invGst, invValue
+//            - grnQty, grnValue, grnDiffQty
+//            - debitNoteNo, debitQty, debitPrice, debitGst, debitValue, debitDiffQty, debitDiffValue
+//            - rtvNoteNo, rtvQty, rtvPrice, rtvGst, rtvValue
+//            - cnType, cnQty, cnValue, cnUtrNo, cnRef
+// ══════════════════════════════════════════════════════════
+
+const SKUS = {
+  // Real SKUs from PO 9202164115 (Reliance)
+  RRL_A: { articleNo:'491264454', hsnCode:'22029920', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  RRL_B: { articleNo:'491264455', hsnCode:'22029920', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  RRL_C: { articleNo:'491264456', hsnCode:'22029920', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  RRL_D: { articleNo:'491264457', hsnCode:'22029920', skuName:'Ocean Fruit Water Mixed Berry 500ml PET' },
+  RRL_E: { articleNo:'491264458', hsnCode:'22029920', skuName:'Ocean Fruit Water Green Apple 500ml PET' },
+  // Blinkit SKUs
+  BLK_A: { articleNo:'BLK-10021', hsnCode:'22029920', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  BLK_B: { articleNo:'BLK-10022', hsnCode:'22029920', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  BLK_C: { articleNo:'BLK-10023', hsnCode:'22029920', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  // Amazon SKUs
+  AMZ_A: { articleNo:'AMZ-B0CX1', hsnCode:'22029920', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  AMZ_B: { articleNo:'AMZ-B0CX2', hsnCode:'22029920', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  AMZ_C: { articleNo:'AMZ-B0CX3', hsnCode:'22029920', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  AMZ_D: { articleNo:'AMZ-B0CX4', hsnCode:'22029920', skuName:'Ocean Fruit Water Mixed Berry 500ml PET' },
+  // DMart SKUs
+  DMT_A: { articleNo:'DMT-30041', hsnCode:'22029920', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  DMT_B: { articleNo:'DMT-30042', hsnCode:'22029920', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  DMT_C: { articleNo:'DMT-30043', hsnCode:'22029920', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+};
+
+const DATA = [
+  // ── PO 1: Reliance Retail — 5 SKUs, shipped in 2 invoices ──
+  {
+    poNo: '9202164115', poDate: '2025-01-05',
+    customer: 'Reliance Retail Ltd', channel: 'MT',
+    invoices: [
+      {
+        // Invoice 1 covers SKU A + B (2 SKUs)
+        soNo:'SO-RRL-001-A', soDate:'2025-01-06',
+        invNo:'INV-F-10001', invDate:'2025-01-07',
+        asn:'ASN-10001', lrNo:'LR-9001', dispDate:'2025-01-08', podDate:'2025-01-10',
+        grnDate:'2025-01-11', grnRef:'GRN-RRL-001', grnNum:'G-40001',
+        payDate:'2025-02-10', payAmount:127766, payUtrNo:'UTR-88001', paymentTNo:'PT-5001', payNo:'PAY-001',
+        ppDate:'2025-02-12', ppAmount:127766, ppUtrNo:'UTR-88001', ppRef:'PP-001',
+        skuLines: [
+          { ...SKUS.RRL_A, poQty:48, poPrice:66.00, poGst:5, poValue:3326,
+            soQty:48, soPrice:66.00, soGst:5,
+            invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+            grnQty:46, grnValue:3188, grnDiffQty:-2,
+            debitNoteNo:'DN-RRL-001', debitQty:2, debitPrice:66.00, debitGst:5, debitValue:138, debitDiffQty:-2, debitDiffValue:-138,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'Shortage', cnQty:2, cnValue:138, cnUtrNo:'CUTR-001', cnRef:'CN-F-001' },
+          { ...SKUS.RRL_B, poQty:48, poPrice:66.00, poGst:5, poValue:3326,
+            soQty:48, soPrice:66.00, soGst:5,
+            invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+            grnQty:48, grnValue:3326, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' }
+        ]
+      },
+      {
+        // Invoice 2 covers SKU C + D + E (3 SKUs)
+        soNo:'SO-RRL-001-B', soDate:'2025-01-09',
+        invNo:'INV-F-10002', invDate:'2025-01-12',
+        asn:'ASN-10002', lrNo:'LR-9002', dispDate:'2025-01-13', podDate:'2025-01-16',
+        grnDate:'2025-01-17', grnRef:'GRN-RRL-002', grnNum:'G-40002',
+        payDate:'2025-02-20', payAmount:9934, payUtrNo:'UTR-88002', paymentTNo:'PT-5002', payNo:'PAY-002',
+        ppDate:'2025-02-22', ppAmount:9934, ppUtrNo:'UTR-88002', ppRef:'PP-002',
+        skuLines: [
+          { ...SKUS.RRL_C, poQty:48, poPrice:66.00, poGst:5, poValue:3326,
+            soQty:48, soPrice:66.00, soGst:5,
+            invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+            grnQty:48, grnValue:3326, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.RRL_D, poQty:24, poPrice:66.00, poGst:5, poValue:1663,
+            soQty:24, soPrice:66.00, soGst:5,
+            invQty:24, invPrice:66.00, invGst:5, invValue:1663,
+            grnQty:22, grnValue:1525, grnDiffQty:-2,
+            debitNoteNo:'DN-RRL-002', debitQty:2, debitPrice:66.00, debitGst:5, debitValue:138, debitDiffQty:-2, debitDiffValue:-138,
+            rtvNoteNo:'RTV-RRL-001', rtvQty:2, rtvPrice:66.00, rtvGst:5, rtvValue:138,
+            cnType:'Damage', cnQty:2, cnValue:138, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.RRL_E, poQty:24, poPrice:66.00, poGst:5, poValue:1663,
+            soQty:24, soPrice:66.00, soGst:5,
+            invQty:24, invPrice:66.00, invGst:5, invValue:1663,
+            grnQty:24, grnValue:1663, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' }
+        ]
+      }
+    ]
+  },
+
+  // ── PO 2: Blinkit — 3 SKUs, 2 invoices ──
+  {
+    poNo: 'PO-BLK-2502', poDate: '2025-01-08',
+    customer: 'Blinkit (Zomato)', channel: 'QC',
+    invoices: [
+      {
+        soNo:'SO-BLK-002-A', soDate:'2025-01-08',
+        invNo:'INV-F-10003', invDate:'2025-01-09',
+        asn:'ASN-10003', lrNo:'LR-9003', dispDate:'2025-01-10', podDate:'2025-01-11',
+        grnDate:'2025-01-12', grnRef:'GRN-BLK-001', grnNum:'G-40003',
+        payDate:'2025-02-05', payAmount:56949, payUtrNo:'UTR-88003', paymentTNo:'PT-5003', payNo:'PAY-003',
+        ppDate:'2025-02-07', ppAmount:56949, ppUtrNo:'UTR-88003', ppRef:'PP-003',
+        skuLines: [
+          { ...SKUS.BLK_A, poQty:600, poPrice:85.00, poGst:12, poValue:57120,
+            soQty:400, soPrice:85.00, soGst:12,
+            invQty:400, invPrice:85.00, invGst:12, invValue:38080,
+            grnQty:398, grnValue:37890, grnDiffQty:-2,
+            debitNoteNo:'DN-BLK-001', debitQty:2, debitPrice:85.00, debitGst:12, debitValue:190, debitDiffQty:-2, debitDiffValue:-190,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'Shortage', cnQty:2, cnValue:190, cnUtrNo:'CUTR-002', cnRef:'CN-F-002' },
+          { ...SKUS.BLK_B, poQty:300, poPrice:85.00, poGst:12, poValue:28560,
+            soQty:200, soPrice:85.00, soGst:12,
+            invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+            grnQty:200, grnValue:19040, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' }
+        ]
+      },
+      {
+        soNo:'SO-BLK-002-B', soDate:'2025-01-15',
+        invNo:'INV-F-10004', invDate:'2025-01-16',
+        asn:'ASN-10004', lrNo:'LR-9004', dispDate:'2025-01-17', podDate:'2025-01-18',
+        grnDate:'2025-01-19', grnRef:'GRN-BLK-002', grnNum:'G-40004',
+        payDate:'2025-02-18', payAmount:57120, payUtrNo:'UTR-88004', paymentTNo:'PT-5004', payNo:'PAY-004',
+        ppDate:'2025-02-20', ppAmount:57120, ppUtrNo:'UTR-88004', ppRef:'PP-004',
+        skuLines: [
+          { ...SKUS.BLK_A, poQty:600, poPrice:85.00, poGst:12, poValue:57120,
+            soQty:200, soPrice:85.00, soGst:12,
+            invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+            grnQty:200, grnValue:19040, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.BLK_B, poQty:300, poPrice:85.00, poGst:12, poValue:28560,
+            soQty:100, soPrice:85.00, soGst:12,
+            invQty:100, invPrice:85.00, invGst:12, invValue:9520,
+            grnQty:100, grnValue:9520, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.BLK_C, poQty:200, poPrice:85.00, poGst:12, poValue:19040,
+            soQty:200, soPrice:85.00, soGst:12,
+            invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+            grnQty:195, grnValue:18563, grnDiffQty:-5,
+            debitNoteNo:'DN-BLK-002', debitQty:5, debitPrice:85.00, debitGst:12, debitValue:476, debitDiffQty:-5, debitDiffValue:-476,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'Shortage', cnQty:5, cnValue:476, cnUtrNo:'', cnRef:'' }
+        ]
+      }
+    ]
+  },
+
+  // ── PO 3: Amazon — 4 SKUs, single invoice ──
+  {
+    poNo: 'PO-AMZ-2503', poDate: '2025-01-10',
+    customer: 'Amazon Seller Central', channel: 'EC',
+    invoices: [
+      {
+        soNo:'SO-AMZ-003-A', soDate:'2025-01-11',
+        invNo:'INV-F-10005', invDate:'2025-01-12',
+        asn:'ASN-10005', lrNo:'LR-9005', dispDate:'2025-01-14', podDate:'2025-01-17',
+        grnDate:'2025-01-18', grnRef:'GRN-AMZ-001', grnNum:'G-40005',
+        payDate:'2025-03-01', payAmount:305216, payUtrNo:'UTR-88005', paymentTNo:'PT-5005', payNo:'PAY-005',
+        ppDate:'2025-03-03', ppAmount:305216, ppUtrNo:'UTR-88005', ppRef:'PP-005',
+        skuLines: [
+          { ...SKUS.AMZ_A, poQty:200, poPrice:340.00, poGst:18, poValue:80240,
+            soQty:200, soPrice:340.00, soGst:18,
+            invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+            grnQty:195, grnValue:78234, grnDiffQty:-5,
+            debitNoteNo:'DN-AMZ-001', debitQty:5, debitPrice:340.00, debitGst:18, debitValue:2006, debitDiffQty:-5, debitDiffValue:-2006,
+            rtvNoteNo:'RTV-AMZ-001', rtvQty:5, rtvPrice:340.00, rtvGst:18, rtvValue:2006,
+            cnType:'Damage', cnQty:5, cnValue:2006, cnUtrNo:'CUTR-003', cnRef:'CN-F-003' },
+          { ...SKUS.AMZ_B, poQty:200, poPrice:340.00, poGst:18, poValue:80240,
+            soQty:200, soPrice:340.00, soGst:18,
+            invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+            grnQty:200, grnValue:80240, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.AMZ_C, poQty:200, poPrice:340.00, poGst:18, poValue:80240,
+            soQty:200, soPrice:340.00, soGst:18,
+            invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+            grnQty:200, grnValue:80240, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.AMZ_D, poQty:200, poPrice:340.00, poGst:18, poValue:80240,
+            soQty:200, soPrice:340.00, soGst:18,
+            invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+            grnQty:195, grnValue:78234, grnDiffQty:-5,
+            debitNoteNo:'DN-AMZ-002', debitQty:5, debitPrice:340.00, debitGst:18, debitValue:2006, debitDiffQty:-5, debitDiffValue:-2006,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'Shortage', cnQty:5, cnValue:2006, cnUtrNo:'', cnRef:'' }
+        ]
+      }
+    ]
+  },
+
+  // ── PO 4: DMart — 3 SKUs, 2 invoices ──
+  {
+    poNo: 'PO-DMT-2504', poDate: '2025-01-12',
+    customer: 'DMart (Avenue Supermarts)', channel: 'MT',
+    invoices: [
+      {
+        soNo:'SO-DMT-004-A', soDate:'2025-01-13',
+        invNo:'INV-F-10006', invDate:'2025-01-14',
+        asn:'ASN-10006', lrNo:'LR-9006', dispDate:'2025-01-15', podDate:'2025-01-18',
+        grnDate:'2025-01-19', grnRef:'GRN-DMT-001', grnNum:'G-40006',
+        payDate:'2025-02-28', payAmount:100800, payUtrNo:'UTR-88006', paymentTNo:'PT-5006', payNo:'PAY-006',
+        ppDate:'2025-03-02', ppAmount:100800, ppUtrNo:'UTR-88006', ppRef:'PP-006',
+        skuLines: [
+          { ...SKUS.DMT_A, poQty:300, poPrice:180.00, poGst:12, poValue:60480,
+            soQty:300, soPrice:180.00, soGst:12,
+            invQty:300, invPrice:180.00, invGst:12, invValue:60480,
+            grnQty:300, grnValue:60480, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' },
+          { ...SKUS.DMT_B, poQty:200, poPrice:180.00, poGst:12, poValue:40320,
+            soQty:200, soPrice:180.00, soGst:12,
+            invQty:200, invPrice:180.00, invGst:12, invValue:40320,
+            grnQty:200, grnValue:40320, grnDiffQty:0,
+            debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0, debitDiffQty:0, debitDiffValue:0,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'', cnQty:0, cnValue:0, cnUtrNo:'', cnRef:'' }
+        ]
+      },
+      {
+        soNo:'SO-DMT-004-B', soDate:'2025-01-20',
+        invNo:'INV-F-10007', invDate:'2025-01-21',
+        asn:'ASN-10007', lrNo:'LR-9007', dispDate:'2025-01-22', podDate:'2025-01-25',
+        grnDate:'2025-01-26', grnRef:'GRN-DMT-002', grnNum:'G-40007',
+        payDate:'', payAmount:0, payUtrNo:'', paymentTNo:'', payNo:'',
+        ppDate:'', ppAmount:0, ppUtrNo:'', ppRef:'',
+        skuLines: [
+          { ...SKUS.DMT_C, poQty:500, poPrice:180.00, poGst:12, poValue:100800,
+            soQty:500, soPrice:180.00, soGst:12,
+            invQty:500, invPrice:180.00, invGst:12, invValue:100800,
+            grnQty:492, grnValue:99187, grnDiffQty:-8,
+            debitNoteNo:'DN-DMT-001', debitQty:8, debitPrice:180.00, debitGst:12, debitValue:1613, debitDiffQty:-8, debitDiffValue:-1613,
+            rtvNoteNo:'', rtvQty:0, rtvPrice:0, rtvGst:0, rtvValue:0,
+            cnType:'Shortage', cnQty:8, cnValue:1613, cnUtrNo:'', cnRef:'' }
+        ]
+      }
+    ]
+  }
+];
+
+// ── HELPERS ──
+const inr = v => v ? '₹' + Number(v).toLocaleString('en-IN') : '—';
+const qty = v => (v || v===0) ? Number(v).toLocaleString('en-IN') : '—';
+const dt  = d => d ? d.slice(8)+'/'+d.slice(5,7)+'/'+d.slice(2,4) : '—';
+const pct = v => v ? v+'%' : '—';
+const _   = v => v || '—';
+
+function chan(ch) {
+  return {MT:'<span class="ch ch-mt">MT</span>',QC:'<span class="ch ch-qc">QC</span>',EC:'<span class="ch ch-ec">EC</span>'}[ch]||ch;
+}
+function dq(v) { if(!v)return'<span class="t3">—</span>'; return v<0?`<span class="neg">${v}</span>`:`<span class="pos">+${v}</span>`; }
+function dv(v) { if(!v)return'<span class="t3">—</span>'; return v<0?`<span class="neg">${inr(v)}</span>`:`<span class="pos">+${inr(v)}</span>`; }
+
+// ── FLATTEN for filtering/sorting ──
+// Returns flat list of {po, inv, sku, invIdx, skuIdx}
+function flatten(data) {
+  const rows = [];
+  data.forEach(po => {
+    po.invoices.forEach((inv, ii) => {
+      inv.skuLines.forEach((sku, si) => {
+        rows.push({ po, inv, sku, invIdx:ii, skuIdx:si,
+          isFirstInv: si===0,
+          isFirstPO: ii===0 && si===0,
+          invLineCount: inv.skuLines.length,
+          poLineCount: po.invoices.reduce((s,inv)=>s+inv.skuLines.length, 0)
+        });
+      });
+    });
+  });
+  return rows;
+}
+
+// ── KPIs ──
+function calcKPI(data) {
+  const invSet = new Set(), asnSet = new Set(), grnSet = new Set(), dnSet = new Set();
+  let disc=0, paid=0, pend=0, cs=0, cc=0, skuLines=0;
+  data.forEach(po => {
+    po.invoices.forEach(inv => {
+      invSet.add(inv.invNo);
+      if(inv.asn) asnSet.add(inv.asn);
+      if(inv.grnNum) grnSet.add(inv.grnNum);
+      inv.skuLines.forEach(s => {
+        skuLines++;
+        if(s.debitNoteNo) { dnSet.add(s.debitNoteNo); disc += s.debitValue||0; }
+      });
+      if(inv.ppAmount) paid += inv.ppAmount;
+      else if(inv.skuLines.reduce((sum,s)=>sum+s.invValue,0) > 0) pend += inv.skuLines.reduce((sum,s)=>sum+(s.invValue||0),0);
+      if(inv.ppDate && po.poDate) { cs += Math.round((new Date(inv.ppDate)-new Date(po.poDate))/86400000); cc++; }
+    });
+  });
+  document.getElementById('k-po').textContent  = data.length;
+  document.getElementById('k-inv').textContent = invSet.size;
+  document.getElementById('k-sku').textContent = skuLines;
+  document.getElementById('k-asn').textContent = asnSet.size;
+  document.getElementById('k-grn').textContent = grnSet.size;
+  document.getElementById('k-dn').textContent  = dnSet.size;
+  document.getElementById('k-di').textContent  = inr(disc);
+  document.getElementById('k-pa').textContent  = inr(paid);
+  document.getElementById('k-pe').textContent  = inr(pend);
+  document.getElementById('k-cy').textContent  = cc ? Math.round(cs/cc) : '—';
+}
+
+// ── RENDER MAIN TABLE ──
+// Uses rowspan: PO fields span all rows of the PO; Invoice fields span all SKU rows of that invoice
+function renderMain(data) {
+  const tbody = document.getElementById('tb-main');
+  let h = '';
+  let invParity = 0; // alternates per invoice for subtle row shading
+
+  data.forEach((po, poIdx) => {
+    const poRowCount = po.invoices.reduce((s, inv) => s + inv.skuLines.length, 0);
+
+    po.invoices.forEach((inv, invIdx) => {
+      const invRowCount = inv.skuLines.length;
+      invParity = (invParity + 1) % 2;
+      const invClass = invParity === 0 ? 'inv-even' : 'inv-odd';
+      const isFirstInv = invIdx === 0;
+
+      inv.skuLines.forEach((sku, skuIdx) => {
+        const isFirstRow  = isFirstInv && skuIdx === 0; // very first row of this PO
+        const isFirstSku  = skuIdx === 0;               // first SKU row of this invoice
+        const poFirstClass = isFirstRow && poIdx > 0 ? ' po-first' : '';
+
+        h += `<tr class="${invClass}${poFirstClass}">`;
+
+        // ── PO columns (rowspan = poRowCount, only on first row of PO) ──
+        if (isFirstRow) {
+          h += `<td class="bd span-cell" rowspan="${poRowCount}">${po.customer}</td>`;
+          h += `<td class="span-cell" rowspan="${poRowCount}">${chan(po.channel)}</td>`;
+        }
+
+        // ── SKU columns (always per row) ──
+        h += `<td class="mn t3">${sku.articleNo}</td>`;
+        h += `<td class="sku-name" title="${sku.skuName}">${sku.skuName}</td>`;
+
+        // ── PO details (rowspan = poRowCount) ──
+        if (isFirstRow) {
+          h += `<td class="mn lnk gs span-cell" rowspan="${poRowCount}">${po.poNo}</td>`;
+          h += `<td class="t2 span-cell" rowspan="${poRowCount}">${dt(po.poDate)}</td>`;
+        }
+
+        // PO qty/price/value are per SKU
+        h += `<td class="nr">${qty(sku.poQty)}</td>`;
+        h += `<td class="nr t2">${inr(sku.poPrice)}</td>`;
+        h += `<td class="nr bd">${inr(sku.poValue)}</td>`;
+
+        // ── SO columns (rowspan = invRowCount, on first SKU of invoice) ──
+        if (isFirstSku) {
+          h += `<td class="mn lnk gs span-cell" rowspan="${invRowCount}">${_(inv.soNo)}</td>`;
+          h += `<td class="t2 span-cell" rowspan="${invRowCount}">${dt(inv.soDate)}</td>`;
+        }
+        // SO qty/price per SKU
+        h += `<td class="nr">${qty(sku.soQty)}</td>`;
+        h += `<td class="nr t2">${inr(sku.soPrice)}</td>`;
+        h += `<td class="nr t3">${pct(sku.soGst)}</td>`;
+
+        // ── Invoice columns ──
+        if (isFirstSku) {
+          h += `<td class="mn lnk gs span-cell" rowspan="${invRowCount}">${_(inv.invNo)}</td>`;
+          h += `<td class="t2 span-cell" rowspan="${invRowCount}">${dt(inv.invDate)}</td>`;
+        }
+        h += `<td class="nr">${qty(sku.invQty)}</td>`;
+        h += `<td class="nr t2">${inr(sku.invPrice)}</td>`;
+        h += `<td class="nr t3">${pct(sku.invGst)}</td>`;
+        h += `<td class="nr bd">${inr(sku.invValue)}</td>`;
+
+        // ── Dispatch (rowspan per invoice) ──
+        if (isFirstSku) {
+          h += `<td class="mn gs span-cell" rowspan="${invRowCount}">${_(inv.asn)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.lrNo)}</td>`;
+          h += `<td class="t2 span-cell" rowspan="${invRowCount}">${dt(inv.dispDate)}</td>`;
+          h += `<td class="t2 span-cell" rowspan="${invRowCount}">${dt(inv.podDate)}</td>`;
+        }
+
+        // ── GRN ──
+        if (isFirstSku) {
+          h += `<td class="t2 gs span-cell" rowspan="${invRowCount}">${dt(inv.grnDate)}</td>`;
+        }
+        h += `<td class="nr">${qty(sku.grnQty)}</td>`;
+        h += `<td class="nr">${inr(sku.grnValue)}</td>`;
+        if (isFirstSku) {
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.grnRef)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.grnNum)}</td>`;
+        }
+        h += `<td class="nr">${dq(sku.grnDiffQty)}</td>`;
+
+        // ── Debit Note ──
+        h += `<td class="mn gs ${sku.debitNoteNo?'lnk':''}">${_(sku.debitNoteNo)}</td>`;
+        h += `<td class="nr">${sku.debitQty?qty(sku.debitQty):'—'}</td>`;
+        h += `<td class="nr">${inr(sku.debitPrice)}</td>`;
+        h += `<td class="nr t3">${pct(sku.debitGst)}</td>`;
+        h += `<td class="nr">${inr(sku.debitValue)}</td>`;
+        h += `<td class="nr">${dq(sku.debitDiffQty)}</td>`;
+        h += `<td class="nr">${dv(sku.debitDiffValue)}</td>`;
+
+        // ── RTV ──
+        h += `<td class="mn t3 gs">${_(sku.rtvNoteNo)}</td>`;
+        h += `<td class="nr">${sku.rtvQty?qty(sku.rtvQty):'—'}</td>`;
+        h += `<td class="nr">${inr(sku.rtvPrice)}</td>`;
+        h += `<td class="nr t3">${pct(sku.rtvGst)}</td>`;
+        h += `<td class="nr">${inr(sku.rtvValue)}</td>`;
+
+        // ── Payment Advice (rowspan per invoice) ──
+        if (isFirstSku) {
+          h += `<td class="t2 gs span-cell" rowspan="${invRowCount}">${dt(inv.payDate)}</td>`;
+          h += `<td class="nr bd span-cell" rowspan="${invRowCount}">${inr(inv.payAmount)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.payUtrNo)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.paymentTNo)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.payNo)}</td>`;
+        }
+
+        // ── Credit Note ──
+        h += `<td class="gs">${sku.cnType?`<span class="bg b-am">${sku.cnType}</span>`:'—'}</td>`;
+        h += `<td class="nr">${sku.cnQty?qty(sku.cnQty):'—'}</td>`;
+        h += `<td class="nr">${inr(sku.cnValue)}</td>`;
+        h += `<td class="mn t3">${_(sku.cnUtrNo)}</td>`;
+        h += `<td class="mn lnk">${_(sku.cnRef)}</td>`;
+
+        // ── Payment Posted (rowspan per invoice) ──
+        if (isFirstSku) {
+          h += `<td class="t2 gs span-cell" rowspan="${invRowCount}">${dt(inv.ppDate)}</td>`;
+          h += `<td class="nr bd span-cell ${inv.ppAmount?'pos':''}" rowspan="${invRowCount}">${inr(inv.ppAmount)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.ppUtrNo)}</td>`;
+          h += `<td class="mn t3 span-cell" rowspan="${invRowCount}">${_(inv.ppRef)}</td>`;
+        }
+
+        h += `</tr>`;
+      });
+    });
+  });
+
+  tbody.innerHTML = h || '<tr class="emp"><td colspan="55">No records match your filters.</td></tr>';
+}
+
+// ── DEBIT TABLE ──
+function renderDebit(data) {
+  let h = '';
+  data.forEach(po => {
+    po.invoices.forEach(inv => {
+      inv.skuLines.forEach(sku => {
+        if (!sku.debitNoteNo) return;
+        h += `<tr>
+          <td class="bd">${po.customer}</td>
+          <td>${chan(po.channel)}</td>
+          <td class="mn t3">${sku.articleNo}</td>
+          <td class="sku-name" title="${sku.skuName}">${sku.skuName}</td>
+          <td>${sku.cnRef?'<span class="bg b-gr">CN Raised</span>':'<span class="bg b-re">Pending</span>'}</td>
+          <td class="mn lnk gs">${po.poNo}</td>
+          <td class="t2">${dt(po.poDate)}</td>
+          <td class="mn lnk gs">${inv.invNo}</td>
+          <td class="t2">${dt(inv.invDate)}</td>
+          <td class="mn lnk gs">${sku.debitNoteNo}</td>
+          <td class="t2">${dt(inv.grnDate)}</td>
+          <td class="nr">${qty(sku.debitQty)}</td>
+          <td class="nr">${inr(sku.debitPrice)}</td>
+          <td class="nr t3">${pct(sku.debitGst)}</td>
+          <td class="nr bd">${inr(sku.debitValue)}</td>
+          <td>${sku.cnType?`<span class="bg b-am">${sku.cnType}</span>`:'—'}</td>
+          <td class="mn t3 gs">${_(inv.grnNum)}</td>
+          <td class="nr">${qty(sku.grnQty)}</td>
+          <td class="nr">${dq(sku.grnDiffQty)}</td>
+        </tr>`;
+      });
+    });
+  });
+  document.getElementById('tb-debit').innerHTML = h || '<tr class="emp"><td colspan="19">No debit notes.</td></tr>';
+}
+
+// ── PAYMENT TABLE ──
+function renderPay(data) {
+  let h = '';
+  data.forEach(po => {
+    po.invoices.forEach(inv => {
+      if (!inv.payDate && !inv.ppDate) return;
+      const totalInvValue = inv.skuLines.reduce((s,sk)=>s+(sk.invValue||0),0);
+      // Payment advice is per invoice (not per SKU line)
+      h += `<tr>
+        <td class="bd">${po.customer}</td>
+        <td>${chan(po.channel)}</td>
+        <td class="mn lnk">${po.poNo}</td>
+        <td class="mn lnk gs">${_(inv.invNo)}</td>
+        <td class="t2">${dt(inv.invDate)}</td>
+        <td class="nr bd">${inr(totalInvValue)}</td>
+        <td class="t2 gs">${dt(inv.payDate)}</td>
+        <td class="nr bd">${inr(inv.payAmount)}</td>
+        <td class="mn t3">${_(inv.payUtrNo)}</td>
+        <td class="mn t3">${_(inv.paymentTNo)}</td>
+        <td class="mn t3">${_(inv.payNo)}</td>
+        <td class="gs">—</td>
+        <td class="nr">—</td>
+        <td class="nr">—</td>
+        <td class="mn">—</td>
+        <td class="t2 gs">${dt(inv.ppDate)}</td>
+        <td class="nr bd ${inv.ppAmount?'pos':''}">${inr(inv.ppAmount)}</td>
+        <td class="mn t3">${_(inv.ppUtrNo)}</td>
+      </tr>`;
+    });
+  });
+  document.getElementById('tb-pay').innerHTML = h || '<tr class="emp"><td colspan="18">No payment records.</td></tr>';
+}
+
+// ── FILTERS ──
+let filtered = [...DATA];
+
+function applyFilters() {
+  const ch   = document.getElementById('selCh').value;
+  const cust = document.getElementById('selCust').value;
+  const st   = document.getElementById('selSt').value;
+  const q    = document.getElementById('srch').value.toLowerCase();
+
+  filtered = DATA.filter(po => {
+    if (ch && po.channel !== ch) return false;
+    if (cust && po.customer !== cust) return false;
+    if (q) {
+      const hit = po.customer.toLowerCase().includes(q) ||
+                  po.poNo.toLowerCase().includes(q) ||
+                  po.invoices.some(inv =>
+                    (inv.invNo||'').toLowerCase().includes(q) ||
+                    (inv.soNo||'').toLowerCase().includes(q) ||
+                    inv.skuLines.some(s =>
+                      s.skuName.toLowerCase().includes(q) ||
+                      s.articleNo.toLowerCase().includes(q)
+                    )
+                  );
+      if (!hit) return false;
+    }
+    if (st) {
+      const ok = po.invoices.some(inv => {
+        const hasDebit = inv.skuLines.some(s => !!s.debitNoteNo);
+        if (st==='Paid')     return !!inv.ppDate;
+        if (st==='Invoiced') return !!inv.invNo && !inv.grnDate;
+        if (st==='GRN Done') return !!inv.grnDate && !hasDebit;
+        if (st==='Disputed') return hasDebit;
+        if (st==='Open')     return !inv.invNo;
+        return true;
+      });
+      if (!ok) return false;
+    }
+    return true;
+  });
+
+  renderMain(filtered);
+  renderDebit(filtered);
+  renderPay(filtered);
+  calcKPI(filtered);
+}
+
+// ── CUSTOMER DROPDOWN POPULATION ──
+function populateCustDropdown() {
+  const sel = document.getElementById('selCust');
+  const customers = [...new Set(DATA.map(po => po.customer))].sort();
+  customers.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+// ── SORT (on PO-level fields) ──
+let sortKey = null, sortDir = 1;
+function srt(key, th) {
+  if (sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  document.querySelectorAll('thead tr.cols th').forEach(t => { t.classList.remove('sorted'); delete t.dataset.dir; });
+  th.classList.add('sorted'); th.dataset.dir = sortDir===1?'↑':'↓';
+  applyFilters();
+}
+
+// ── TABS ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('p-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const rows = [['Customer','Channel','Article No','SKU Description',
+    'PO No','PO Date','PO Qty','Base Price','PO Value',
+    'SO No','SO Date','SO Qty','Invoice No','Invoice Date','Inv Qty','Inv Value',
+    'ASN','LR No','Dispatch Date','POD Date',
+    'GRN Date','GRN Qty','GRN Value','GRN Ref','GRN No','GRN Diff Qty',
+    'Debit Note No','DN Qty','DN Value',
+    'Pay Date','Pay Amount','UTR No',
+    'CN Type','CN Value','CN Ref',
+    'Posted Date','Posted Amount']];
+  DATA.forEach(po => po.invoices.forEach(inv => inv.skuLines.forEach(s => rows.push([
+    po.customer, po.channel, s.articleNo, s.skuName,
+    po.poNo, po.poDate, s.poQty, s.poPrice, s.poValue,
+    inv.soNo, inv.soDate, s.soQty, inv.invNo, inv.invDate, s.invQty, s.invValue,
+    inv.asn, inv.lrNo, inv.dispDate, inv.podDate,
+    inv.grnDate, s.grnQty, s.grnValue, inv.grnRef, inv.grnNum, s.grnDiffQty,
+    s.debitNoteNo, s.debitQty, s.debitValue,
+    inv.payDate, inv.payAmount, inv.payUtrNo,
+    s.cnType, s.cnValue, s.cnRef,
+    inv.ppDate, inv.ppAmount
+  ]))));
+  const csv = rows.map(r => r.map(v => `"${v??''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'otc-tracker-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── INIT ──
+populateCustDropdown();
+applyFilters();
+</script>
+</body>
+</html>
