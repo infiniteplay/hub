@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order to Delivery Dashboard</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a1a;
+      font-size: 14px;
+      padding-top: 62px;
+    }
+
+    /* ── Header ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: #fff; border-bottom: 1px solid #e5e7eb;
+      padding: 0 28px; height: 62px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 1000;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 30px; height: 30px; border-radius: 7px;
+      background: #1f2937;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 12px; letter-spacing: -0.5px;
+    }
+    .logo-text { font-size: 16px; font-weight: 700; color: #111; }
+    .logo-sep  { color: #d1d5db; margin: 0 2px; }
+    .logo-sub  { font-size: 13px; color: #6b7280; font-weight: 400; }
+    .header-right { display: flex; gap: 8px; }
+    .hbtn {
+      padding: 7px 14px; border: 1px solid #d1d5db; border-radius: 6px;
+      background: #f9fafb; cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: all .18s; color: #374151;
+    }
+    .hbtn:hover { background: #374151; color: #fff; border-color: #374151; }
+    .hbtn.primary { background: #374151; color: #fff; border-color: #374151; }
+    .hbtn.primary:hover { background: #111; }
+
+    /* ── Pipeline bar ── */
+    .pipeline {
+      background: #fff; border-bottom: 1px solid #e5e7eb;
+      padding: 0 28px; display: flex; align-items: stretch;
+      overflow-x: auto; white-space: nowrap;
+    }
+    .p-step {
+      display: flex; align-items: center; gap: 7px;
+      padding: 13px 18px; cursor: pointer; font-size: 12px; font-weight: 600;
+      color: #6b7280; border-bottom: 2.5px solid transparent;
+      transition: all .18s; white-space: nowrap; flex-shrink: 0;
+    }
+    .p-step:hover  { color: #111; background: #f8f8f8; }
+    .p-step.active { color: #111; border-bottom-color: #374151; background: #f8f8f8; }
+    .p-step .p-count {
+      background: #e5e7eb; color: #374151; border-radius: 10px;
+      padding: 1px 7px; font-size: 11px; font-weight: 700;
+    }
+    .p-step.active .p-count { background: #e5e7eb; color: #111; }
+    .p-arrow { color: #d1d5db; font-size: 13px; display: flex; align-items: center; padding: 0 2px; flex-shrink: 0; }
+
+    /* ── Controls ── */
+    .controls {
+      background: #fff; border-bottom: 1px solid #e5e7eb;
+      padding: 11px 28px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .ctrl-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    select, input[type=date], input[type=text] {
+      padding: 7px 11px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; background: #fff; color: #374151; outline: none;
+    }
+    select:focus, input:focus { border-color: #9ca3af; box-shadow: 0 0 0 2px #f3f4f6; }
+    .search-wrap { position: relative; }
+    .search-wrap input { padding-left: 32px; width: 270px; }
+    .search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px; color: #9ca3af; pointer-events: none;
+    }
+    .divider { width: 1px; height: 20px; background: #e5e7eb; }
+
+    /* ── Stat bar (single line) ── */
+    .stat-bar {
+      background: #fff; border-bottom: 1px solid #e5e7eb;
+      padding: 11px 28px;
+      display: flex; align-items: center; gap: 0;
+      overflow-x: auto; white-space: nowrap;
+    }
+    .stat-item {
+      display: flex; align-items: baseline; gap: 5px;
+      padding: 0 18px; border-right: 1px solid #e5e7eb; flex-shrink: 0;
+    }
+    .stat-item:first-child { padding-left: 0; }
+    .stat-item:last-child  { border-right: none; }
+    .stat-num { font-size: 15px; font-weight: 600; color: #111; }
+    .stat-lbl { font-size: 12.5px; color: #6b7280; }
+    .up  { color: #16a34a; }
+    .dn  { color: #dc2626; }
+    .neu { color: #9ca3af; }
+
+    /* ── Funnel cards ── */
+    .funnel-row {
+      display: grid; gap: 8px; padding: 16px 28px;
+      grid-template-columns: repeat(9, 1fr);
+    }
+    .f-card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 14px 10px; text-align: center; cursor: pointer;
+      transition: box-shadow .18s, border-color .18s;
+    }
+    .f-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.07); border-color: #9ca3af; }
+    .f-card.active { border-color: #374151; box-shadow: 0 0 0 1.5px #374151; }
+    .f-card .fc-label { font-size: 10.5px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .5px; }
+    .f-card .fc-count { font-size: 24px; font-weight: 700; color: #111; margin: 5px 0 2px; line-height: 1; }
+    .f-card .fc-pct   { font-size: 11px; color: #9ca3af; }
+    .f-card .fc-bar   { height: 3px; background: #f3f4f6; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+    .f-card .fc-fill  { height: 100%; background: #d1d5db; border-radius: 2px; }
+
+    .fc-po, .fc-so, .fc-obd, .fc-apt, .fc-inv, .fc-asn, .fc-pod, .fc-grn, .fc-pay { --fc: #374151; }
+
+    /* ── Main layout ── */
+    .main { display: grid; grid-template-columns: 1fr 300px; gap: 14px; padding: 0 28px 36px; }
+
+    /* ── Table card ── */
+    .card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;
+    }
+    .card-head {
+      padding: 13px 18px; border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: #111; }
+    .card-meta  { font-size: 12px; color: #9ca3af; margin-left: 8px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #f8f9fa; }
+    th {
+      padding: 10px 14px; text-align: left; font-weight: 600;
+      font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid #e5e7eb; white-space: nowrap; cursor: pointer;
+      user-select: none;
+    }
+    th:hover { color: #111; }
+    td { padding: 11px 14px; border-bottom: 1px solid #f1f3f4; vertical-align: middle; white-space: nowrap; font-weight: 400; color: #374151; }
+    tbody tr.main-row:hover { background: #f8f8f8; }
+    tbody tr.main-row:last-of-type td { border-bottom: none; }
+
+    /* expand button */
+    .xbtn {
+      width: 22px; height: 22px; border-radius: 4px;
+      border: 1px solid #e5e7eb; background: #f9fafb;
+      cursor: pointer; font-size: 10px; font-weight: 700;
+      color: #6b7280; display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s; flex-shrink: 0;
+    }
+    .xbtn:hover { background: #f0f0f0; border-color: #d1d5db; color: #111; }
+    .xbtn.open  { background: #f0f0f0; border-color: #d1d5db; color: #111; }
+
+    /* sub-rows */
+    .sub-row { display: none; background: #fafafa; }
+    .sub-row.visible { display: table-row; }
+    .sub-row td { padding: 0; border-bottom: 1px solid #e5e7eb; }
+    .sub-inner { padding: 0 0 0 48px; }
+    .sub-table { width: 100%; border-collapse: collapse; }
+    .sub-table th {
+      background: #f3f4f6; font-size: 10.5px; padding: 7px 12px;
+      color: #6b7280; text-transform: uppercase; letter-spacing: .4px;
+      border-bottom: 1px solid #e5e7eb; cursor: default;
+    }
+    .sub-table th:hover { color: #6b7280; }
+    .sub-table td { font-size: 12px; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #374151; white-space: nowrap; }
+    .sub-table tbody tr:last-child td { border-bottom: none; }
+    .sub-table tbody tr:hover { background: #f5f5f5; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11.5px; font-weight: 500; white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    /* Status badges — very low saturation */
+    .b-green   { background: #f0faf4; color: #276749; border-color: #c6e8d4; }
+    .b-teal    { background: #f0faf4; color: #276749; border-color: #c6e8d4; }
+    .b-red     { background: #fdf3f3; color: #b91c1c; border-color: #f5c6c6; }
+    .b-amber   { background: #fdf8f0; color: #92400e; border-color: #f0d9b5; }
+    .b-gray    { background: #f5f5f5; color: #6b7280; border-color: #e5e5e5; }
+    /* Reference badges (SO, OBD) — plain gray */
+    .b-indigo  { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-purple  { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-blue    { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-pink    { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-orange  { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-yellow  { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    /* Channel tags */
+    .b-mt      { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-qc      { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+    .b-ec      { background: #f5f5f5; color: #374151; border-color: #e5e5e5; }
+
+    /* ── Side panels ── */
+    .side { display: flex; flex-direction: column; gap: 12px; }
+    .s-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+    .s-head { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; font-weight: 700; color: #111; }
+    .s-body { padding: 14px 16px; }
+
+    /* payment breakdown */
+    .pay-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+    .pay-row:last-child { border-bottom: none; }
+    .pay-row .pr-label { font-size: 12.5px; color: #374151; display: flex; align-items: center; gap: 7px; }
+    .pay-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .pay-row .pr-val { font-size: 13px; font-weight: 700; color: #111; }
+    .pay-row .pr-bar { height: 4px; border-radius: 2px; background: #f3f4f6; margin-top: 3px; overflow: hidden; }
+    .pay-row .pr-fill { height: 100%; border-radius: 2px; }
+
+    /* dispute list */
+    .d-item { padding: 7px 0; border-bottom: 1px solid #f3f4f6; }
+    .d-item:last-child { border-bottom: none; }
+    .d-top  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .d-lbl  { font-size: 12px; color: #374151; }
+    .d-val  { font-size: 12px; font-weight: 700; color: #dc2626; }
+    .d-bar  { height: 3px; border-radius: 2px; background: #f3f4f6; overflow: hidden; }
+    .d-fill { height: 100%; background: #fca5a5; border-radius: 2px; }
+
+    /* TAT grid */
+    .tat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tat-item { background: #f8f9fa; border-radius: 7px; padding: 9px 11px; }
+    .tat-lbl  { font-size: 10.5px; color: #6b7280; margin-bottom: 3px; }
+    .tat-val  { font-size: 17px; font-weight: 800; }
+    .tv-green { color: #16a34a; } .tv-amber { color: #d97706; } .tv-red { color: #dc2626; }
+
+    /* alerts */
+    .alert-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; font-size: 12.5px; }
+    .alert-item:last-child { border-bottom: none; }
+    .a-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .a-red { background: #ef4444; } .a-amber { background: #f59e0b; } .a-blue { background: #3b82f6; } .a-green { background: #22c55e; }
+    .a-text { color: #374151; line-height: 1.4; }
+    .a-text strong { color: #111; }
+
+    /* ── Pagination ── */
+    .pagination {
+      padding: 11px 18px; border-top: 1px solid #f0f0f0;
+      display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #6b7280;
+    }
+    .pg-btns { display: flex; gap: 4px; }
+    .pgbtn {
+      padding: 4px 10px; border: 1px solid #e5e7eb; border-radius: 5px;
+      background: #fff; cursor: pointer; font-size: 12px; color: #374151; transition: all .15s;
+    }
+    .pgbtn:hover  { background: #f3f4f6; border-color: #d1d5db; color: #111; }
+    .pgbtn.active { background: #374151; color: #fff; border-color: #374151; }
+    .pgbtn:disabled { opacity: .4; cursor: default; }
+
+    /* ── Misc ── */
+    .mono   { font-family: 'SF Mono', Consolas, monospace; font-size: 12px; }
+    .muted  { color: #9ca3af; font-size: 12px; }
+    .fw7    { font-weight: 500; }
+    .fw8    { font-weight: 600; }
+    .red    { color: #dc2626; }
+    .grn    { color: #16a34a; }
+    .amt    { font-variant-numeric: tabular-nums; }
+
+    /* ── Progress inline ── */
+    .prog { display: flex; align-items: center; gap: 5px; }
+    .prog-bar { width: 50px; height: 5px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 3px; }
+    .pg-green { background: #22c55e; } .pg-yellow { background: #eab308; } .pg-red { background: #ef4444; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1200px) { .main { grid-template-columns: 1fr; } .funnel-row { grid-template-columns: repeat(5, 1fr); } }
+    @media (max-width: 768px)  { .funnel-row { grid-template-columns: repeat(3, 1fr); } }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f4f6f9; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ HEADER ════════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">O2D</div>
+    <span class="logo-text">Order to Delivery</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-sub">Modern Trade · Quick Commerce · E-Commerce</span>
+  </div>
+  <div class="header-right">
+    <button class="hbtn" onclick="window.location.href='index.html'">Back to Hub</button>
+    <button class="hbtn" onclick="location.reload()">Refresh</button>
+    <button class="hbtn primary" onclick="exportCSV()">Export CSV</button>
+  </div>
+</header>
+
+<!-- ════════════════════ PIPELINE ════════════════════ -->
+<div class="pipeline" id="pipeline">
+  <div class="p-step active" data-stage="all" onclick="setStage('all')">All Stages <span class="p-count" id="pc-all">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="po" onclick="setStage('po')">PO <span class="p-count" id="pc-po">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="so" onclick="setStage('so')">SO <span class="p-count" id="pc-so">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="obd" onclick="setStage('obd')">OBD <span class="p-count" id="pc-obd">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="appt" onclick="setStage('appt')">Appointment <span class="p-count" id="pc-appt">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="inv" onclick="setStage('inv')">Invoice <span class="p-count" id="pc-inv">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="asn" onclick="setStage('asn')">ASN <span class="p-count" id="pc-asn">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="pod" onclick="setStage('pod')">POD <span class="p-count" id="pc-pod">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="grn" onclick="setStage('grn')">GRN / GDN <span class="p-count" id="pc-grn">0</span></div>
+  <span class="p-arrow">›</span>
+  <div class="p-step" data-stage="pay" onclick="setStage('pay')">Payment <span class="p-count" id="pc-pay">0</span></div>
+</div>
+
+<!-- ════════════════════ CONTROLS ════════════════════ -->
+<div class="controls">
+  <div class="ctrl-left">
+    <span style="font-size:12px;color:#6b7280;font-weight:500;">From</span>
+    <input type="date" id="fromDate" value="2025-01-01">
+    <span style="font-size:12px;color:#6b7280;font-weight:500;">to</span>
+    <input type="date" id="toDate" value="2025-06-30">
+    <div class="divider"></div>
+    <select id="channelFilter" onchange="applyFilters()">
+      <option value="all">All Channels</option>
+      <option value="MT">Modern Trade</option>
+      <option value="QC">Quick Commerce</option>
+      <option value="EC">E-Commerce</option>
+    </select>
+    <select id="accountFilter" onchange="applyFilters()">
+      <option value="all">All Accounts</option>
+      <option value="Blinkit">Blinkit</option>
+      <option value="Swiggy Instamart">Swiggy Instamart</option>
+      <option value="Zepto">Zepto</option>
+      <option value="BigBasket">BigBasket</option>
+      <option value="DMart">DMart</option>
+      <option value="Walmart">Walmart</option>
+      <option value="Reliance Smart">Reliance Smart</option>
+      <option value="Amazon">Amazon</option>
+      <option value="Flipkart">Flipkart</option>
+    </select>
+    <select id="payFilter" onchange="applyFilters()">
+      <option value="all">All Payment Status</option>
+      <option value="Paid">Paid</option>
+      <option value="Dispute">Dispute</option>
+      <option value="Pending">Pending</option>
+    </select>
+    <select id="grnFilter" onchange="applyFilters()">
+      <option value="all">All GRN Status</option>
+      <option value="Accepted">Accepted</option>
+      <option value="Short">Short</option>
+      <option value="Pending">Pending</option>
+    </select>
+  </div>
+  <div class="search-wrap">
+    <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search PO, Account, Warehouse, SO…" oninput="applyFilters()">
+  </div>
+</div>
+
+<!-- ════════════════════ STAT BAR ════════════════════ -->
+<div class="stat-bar">
+  <div class="stat-item"><span class="stat-num" id="kTotal">—</span><span class="stat-lbl">POs</span></div>
+  <div class="stat-item"><span class="stat-num" id="kSO">—</span><span class="stat-lbl">SOs</span></div>
+  <div class="stat-item"><span class="stat-num" id="kInv">—</span><span class="stat-lbl">Invoices</span></div>
+  <div class="stat-item"><span class="stat-num" id="kASN">—</span><span class="stat-lbl">ASNs</span></div>
+  <div class="stat-item"><span class="stat-num" id="kPOD">—</span><span class="stat-lbl">PODs confirmed</span></div>
+  <div class="stat-item"><span class="stat-num" id="kGRN">—</span><span class="stat-lbl">GRNs accepted</span></div>
+  <div class="stat-item"><span class="stat-num" id="kFill">—</span><span class="stat-lbl">Avg fill rate</span></div>
+  <div class="stat-item"><span class="stat-num" id="kTAT">—</span><span class="stat-lbl">Avg TAT</span></div>
+  <div class="stat-item"><span class="stat-num up" id="kPaid">—</span><span class="stat-lbl">Paid</span></div>
+  <div class="stat-item"><span class="stat-num dn" id="kDispute">—</span><span class="stat-lbl">In dispute</span></div>
+</div>
+
+<!-- ════════════════════ FUNNEL ════════════════════ -->
+<div class="funnel-row" id="funnelRow"></div>
+
+<!-- ════════════════════ MAIN ════════════════════ -->
+<div class="main">
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <span class="card-title">Purchase Order — Delivery Tracker</span>
+        <span class="card-meta" id="rowCount"></span>
+      </div>
+      <div style="font-size:12px;color:#6b7280;">Click <strong style="color:#111">+</strong> on any row to view linked Invoices &amp; ASNs</div>
+    </div>
+    <div class="table-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th style="width:32px;"></th>
+            <th onclick="sortBy('id')">PO #</th>
+            <th onclick="sortBy('account')">Account</th>
+            <th>Channel</th>
+            <th onclick="sortBy('warehouse')">Warehouse</th>
+            <th onclick="sortBy('poDate')">PO Date</th>
+            <th>SO Ref</th>
+            <th>OBD</th>
+            <th>Appointment</th>
+            <th>Invoices / ASNs</th>
+            <th>POD</th>
+            <th>GRN</th>
+            <th onclick="sortBy('fillPct')">Fill %</th>
+            <th onclick="sortBy('tat')">TAT</th>
+            <th>Payment Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="pageInfo"></span>
+      <div class="pg-btns">
+        <button class="pgbtn" id="btnPrev" onclick="changePage(-1)">Prev</button>
+        <button class="pgbtn active" id="pageNum">1</button>
+        <button class="pgbtn" id="btnNext" onclick="changePage(1)">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side -->
+  <div class="side">
+
+    <div class="s-card">
+      <div class="s-head">Payment Status</div>
+      <div class="s-body" id="sidePayment"></div>
+    </div>
+
+    <div class="s-card">
+      <div class="s-head">Dispute Reasons</div>
+      <div class="s-body" id="sideDispute"></div>
+    </div>
+
+    <div class="s-card">
+      <div class="s-head">Avg TAT by Stage</div>
+      <div class="s-body">
+        <div class="tat-grid">
+          <div class="tat-item"><div class="tat-lbl">PO to SO</div><div class="tat-val tv-green">0.8d</div></div>
+          <div class="tat-item"><div class="tat-lbl">SO to OBD</div><div class="tat-val tv-green">0.5d</div></div>
+          <div class="tat-item"><div class="tat-lbl">OBD to Appt.</div><div class="tat-val tv-amber">1.2d</div></div>
+          <div class="tat-item"><div class="tat-lbl">Appt. to POD</div><div class="tat-val tv-amber">1.9d</div></div>
+          <div class="tat-item"><div class="tat-lbl">POD to GRN</div><div class="tat-val tv-green">0.6d</div></div>
+          <div class="tat-item"><div class="tat-lbl">GRN to Payment</div><div class="tat-val tv-red">18.4d</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-card">
+      <div class="s-head">Alerts &amp; Actions</div>
+      <div class="s-body" id="sideAlerts"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════ SCRIPT ════════════════════ -->
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+const DATA = [
+  { id:"BLK/PO/25-26/0041", account:"Blinkit",          channel:"QC", warehouse:"Ashish Marketing, Mumbai",       poDate:"2025-01-05", so:"SO-BLK-10401", obd:"OBD-4210", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:98,  tat:4.1, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:142500, invoices:[
+    { inv:"INV/25-26/4821", date:"2025-01-07", val:142500, asn:"ASN-8801", asnDate:"2025-01-08", qty:240, pod:"Confirmed", grn:"Accepted", short:0,  damage:2 }
+  ]},
+  { id:"SWG/PO/25-26/0118", account:"Swiggy Instamart", channel:"QC", warehouse:"Alpino Health Foods, Pune",      poDate:"2025-01-08", so:"SO-SWG-10402", obd:"OBD-4211", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:96,  tat:3.8, payment:"Dispute", outstanding:34200,  disputeReason:"Tax Withhold",       received:87600,  invoices:[
+    { inv:"INV/25-26/4822", date:"2025-01-10", val:87600,  asn:"ASN-8802", asnDate:"2025-01-11", qty:180, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 },
+    { inv:"INV/25-26/4823", date:"2025-01-10", val:34200,  asn:"ASN-8803", asnDate:"2025-01-12", qty:70,  pod:"Confirmed", grn:"Accepted", short:5,  damage:0 }
+  ]},
+  { id:"ZPT/PO/25-26/0073", account:"Zepto",            channel:"QC", warehouse:"iStore Direct Trading, Hyd",     poDate:"2025-01-09", so:"SO-ZPT-10403", obd:"OBD-4212", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:2.9, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:56400,  invoices:[
+    { inv:"INV/25-26/4824", date:"2025-01-11", val:56400,  asn:"ASN-8804", asnDate:"2025-01-12", qty:120, pod:"Confirmed", grn:"Accepted", short:0,  damage:1 }
+  ]},
+  { id:"BBK/PO/25-26/0229", account:"BigBasket",        channel:"EC", warehouse:"Sakshi Agency, Pune",            poDate:"2025-01-11", so:"SO-BBK-10404", obd:"OBD-4213", appt:"Confirmed",   pod:"Partial",   grn:"Short",    fillPct:91,  tat:4.5, payment:"Dispute", outstanding:45000,  disputeReason:"Deduction Mismatch", received:214000, invoices:[
+    { inv:"INV/25-26/4825", date:"2025-01-13", val:214000, asn:"ASN-8805", asnDate:"2025-01-14", qty:400, pod:"Confirmed", grn:"Short",    short:12, damage:3 },
+    { inv:"INV/25-26/4826", date:"2025-01-13", val:45000,  asn:"ASN-8806", asnDate:"2025-01-15", qty:80,  pod:"Pending",   grn:"Pending",  short:0,  damage:0 }
+  ]},
+  { id:"DMT/PO/25-26/0312", account:"DMart",            channel:"MT", warehouse:"SMS Marketing, Chennai",         poDate:"2025-01-12", so:"SO-DMT-10405", obd:"OBD-4214", appt:"Rescheduled", pod:"Confirmed", grn:"Accepted", fillPct:97,  tat:5.2, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:315000, invoices:[
+    { inv:"INV/25-26/4827", date:"2025-01-15", val:315000, asn:"ASN-8807", asnDate:"2025-01-16", qty:600, pod:"Confirmed", grn:"Accepted", short:0,  damage:5 }
+  ]},
+  { id:"WMT/PO/25-26/0087", account:"Walmart",          channel:"MT", warehouse:"Sawhney Agencies, Amritsar",     poDate:"2025-01-14", so:"SO-WMT-10406", obd:"OBD-4215", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:99,  tat:3.6, payment:"Pending", outstanding:198000, disputeReason:"",                  received:0,      invoices:[
+    { inv:"INV/25-26/4828", date:"2025-01-16", val:198000, asn:"ASN-8808", asnDate:"2025-01-17", qty:350, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"RLI/PO/25-26/0154", account:"Reliance Smart",   channel:"MT", warehouse:"Business Process Matrix, BLR",   poDate:"2025-01-16", so:"SO-RLI-10407", obd:"OBD-4216", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:95,  tat:3.9, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:127500, invoices:[
+    { inv:"INV/25-26/4829", date:"2025-01-18", val:127500, asn:"ASN-8809", asnDate:"2025-01-19", qty:255, pod:"Confirmed", grn:"Accepted", short:2,  damage:0 }
+  ]},
+  { id:"AMZ/PO/25-26/0508", account:"Amazon",           channel:"EC", warehouse:"Sawhney Agencies, Delhi",        poDate:"2025-01-17", so:"SO-AMZ-10408", obd:"OBD-4217", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:98,  tat:3.2, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:312000, invoices:[
+    { inv:"INV/25-26/4830", date:"2025-01-19", val:234000, asn:"ASN-8810", asnDate:"2025-01-20", qty:468, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 },
+    { inv:"INV/25-26/4831", date:"2025-01-19", val:78000,  asn:"ASN-8811", asnDate:"2025-01-21", qty:156, pod:"Confirmed", grn:"Accepted", short:3,  damage:2 }
+  ]},
+  { id:"FLK/PO/25-26/0276", account:"Flipkart",         channel:"EC", warehouse:"Ashish Marketing, Sub-D",        poDate:"2025-01-18", so:"SO-FLK-10409", obd:"OBD-4218", appt:"Confirmed",   pod:"Pending",   grn:"Pending",  fillPct:85,  tat:4.0, payment:"Pending", outstanding:165000, disputeReason:"",                  received:0,      invoices:[
+    { inv:"INV/25-26/4832", date:"2025-01-20", val:165000, asn:"ASN-8812", asnDate:"2025-01-21", qty:300, pod:"Pending",   grn:"Pending",  short:0,  damage:0 }
+  ]},
+  { id:"BLK/PO/25-26/0059", account:"Blinkit",          channel:"QC", warehouse:"Ashish Marketing, Mumbai",       poDate:"2025-01-20", so:"SO-BLK-10410", obd:"OBD-4219", appt:"Confirmed",   pod:"Confirmed", grn:"Short",    fillPct:93,  tat:3.5, payment:"Dispute", outstanding:19500,  disputeReason:"Short Quantity",     received:78000,  invoices:[
+    { inv:"INV/25-26/4833", date:"2025-01-22", val:97500,  asn:"ASN-8813", asnDate:"2025-01-23", qty:195, pod:"Confirmed", grn:"Short",    short:8,  damage:0 }
+  ]},
+  { id:"SWG/PO/25-26/0134", account:"Swiggy Instamart", channel:"QC", warehouse:"Alpino Health Foods, Pune",      poDate:"2025-01-22", so:"SO-SWG-10411", obd:"OBD-4220", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:3.0, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:62400,  invoices:[
+    { inv:"INV/25-26/4834", date:"2025-01-24", val:62400,  asn:"ASN-8814", asnDate:"2025-01-25", qty:130, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"DMT/PO/25-26/0341", account:"DMart",            channel:"MT", warehouse:"SMS Marketing, Chennai",         poDate:"2025-01-23", so:"SO-DMT-10412", obd:"OBD-4221", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:99,  tat:4.8, payment:"Dispute", outstanding:57900,  disputeReason:"Damage Deduction",   received:231600, invoices:[
+    { inv:"INV/25-26/4835", date:"2025-01-25", val:289500, asn:"ASN-8815", asnDate:"2025-01-26", qty:540, pod:"Confirmed", grn:"Accepted", short:0,  damage:8 }
+  ]},
+  { id:"ZPT/PO/25-26/0091", account:"Zepto",            channel:"QC", warehouse:"iStore Direct Trading, Hyd",     poDate:"2025-01-25", so:"SO-ZPT-10413", obd:"OBD-4222", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:2.7, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:43200,  invoices:[
+    { inv:"INV/25-26/4836", date:"2025-01-27", val:43200,  asn:"ASN-8816", asnDate:"2025-01-28", qty:90,  pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"BBK/PO/25-26/0258", account:"BigBasket",        channel:"EC", warehouse:"Sakshi Agency, Pune",            poDate:"2025-01-26", so:"SO-BBK-10414", obd:"OBD-4223", appt:"Rescheduled", pod:"Confirmed", grn:"Accepted", fillPct:96,  tat:5.1, payment:"Dispute", outstanding:39000,  disputeReason:"Tax Withhold",       received:178500, invoices:[
+    { inv:"INV/25-26/4837", date:"2025-01-29", val:178500, asn:"ASN-8817", asnDate:"2025-01-30", qty:340, pod:"Confirmed", grn:"Accepted", short:6,  damage:0 },
+    { inv:"INV/25-26/4838", date:"2025-01-29", val:39000,  asn:"ASN-8818", asnDate:"2025-01-31", qty:75,  pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"WMT/PO/25-26/0103", account:"Walmart",          channel:"MT", warehouse:"Sawhney Agencies, Amritsar",     poDate:"2025-01-28", so:"SO-WMT-10415", obd:"OBD-4224", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:98,  tat:3.4, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:225000, invoices:[
+    { inv:"INV/25-26/4839", date:"2025-01-30", val:225000, asn:"ASN-8819", asnDate:"2025-01-31", qty:420, pod:"Confirmed", grn:"Accepted", short:0,  damage:3 }
+  ]},
+  { id:"AMZ/PO/25-26/0529", account:"Amazon",           channel:"EC", warehouse:"Sawhney Agencies, Delhi",        poDate:"2025-01-29", so:"SO-AMZ-10416", obd:"OBD-4225", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:3.0, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:312000, invoices:[
+    { inv:"INV/25-26/4840", date:"2025-01-31", val:312000, asn:"ASN-8820", asnDate:"2025-02-01", qty:600, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"BLK/PO/25-26/0072", account:"Blinkit",          channel:"QC", warehouse:"Ashish Marketing, Mumbai",       poDate:"2025-02-01", so:"SO-BLK-10417", obd:"OBD-4226", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:99,  tat:3.9, payment:"Pending", outstanding:134250, disputeReason:"",                  received:0,      invoices:[
+    { inv:"INV/25-26/4841", date:"2025-02-03", val:134250, asn:"ASN-8821", asnDate:"2025-02-04", qty:265, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+  { id:"FLK/PO/25-26/0301", account:"Flipkart",         channel:"EC", warehouse:"Ashish Marketing, Sub-D",        poDate:"2025-02-02", so:"SO-FLK-10418", obd:"OBD-4227", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:97,  tat:3.7, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:89700,  invoices:[
+    { inv:"INV/25-26/4842", date:"2025-02-04", val:89700,  asn:"ASN-8822", asnDate:"2025-02-05", qty:180, pod:"Confirmed", grn:"Accepted", short:3,  damage:0 }
+  ]},
+  { id:"RLI/PO/25-26/0183", account:"Reliance Smart",   channel:"MT", warehouse:"Business Process Matrix, BLR",   poDate:"2025-02-03", so:"SO-RLI-10419", obd:"OBD-4228", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:4.2, payment:"Dispute", outstanding:31200,  disputeReason:"Price Discrepancy",  received:124800, invoices:[
+    { inv:"INV/25-26/4843", date:"2025-02-05", val:156000, asn:"ASN-8823", asnDate:"2025-02-06", qty:310, pod:"Confirmed", grn:"Accepted", short:0,  damage:4 }
+  ]},
+  { id:"SWG/PO/25-26/0149", account:"Swiggy Instamart", channel:"QC", warehouse:"Alpino Health Foods, Pune",      poDate:"2025-02-05", so:"SO-SWG-10420", obd:"OBD-4229", appt:"Confirmed",   pod:"Confirmed", grn:"Accepted", fillPct:100, tat:3.1, payment:"Paid",    outstanding:0,      disputeReason:"",                  received:74400,  invoices:[
+    { inv:"INV/25-26/4844", date:"2025-02-07", val:74400,  asn:"ASN-8824", asnDate:"2025-02-08", qty:155, pod:"Confirmed", grn:"Accepted", short:0,  damage:0 }
+  ]},
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let filtered   = [...DATA];
+let page       = 1;
+const PER_PAGE = 12;
+let sortKey    = '';
+let sortAsc    = true;
+let activeStage = 'all';
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+function fmt(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
+
+function badge(text, cls){
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function apptBadge(v){ const m={Confirmed:'b-green',Rescheduled:'b-amber',Pending:'b-gray'}; return badge(v, m[v]||'b-gray'); }
+function podBadge(v) { const m={Confirmed:'b-green',Partial:'b-yellow',Pending:'b-gray'};  return badge(v, m[v]||'b-gray'); }
+function grnBadge(v) { const m={Accepted:'b-teal', Short:'b-red',   Pending:'b-gray'};    return badge(v, m[v]||'b-gray'); }
+function payBadge(v) { const m={Paid:'b-green',Dispute:'b-red',Pending:'b-amber',Partial:'b-blue'}; return badge(v, m[v]||'b-gray'); }
+function chanBadge(v){ const m={MT:'b-mt',QC:'b-qc',EC:'b-ec'}; return badge(v, m[v]||'b-gray'); }
+
+function fillBar(pct){
+  const cls = pct >= 98 ? 'pg-green' : pct >= 90 ? 'pg-yellow' : 'pg-red';
+  return `<div class="prog"><div class="prog-bar"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div><span class="fw7">${pct}%</span></div>`;
+}
+function tatBadge(v){
+  const cls = v <= 3 ? 'b-green' : v <= 5 ? 'b-amber' : 'b-red';
+  return badge(v + 'd', cls);
+}
+
+// ─── FUNNEL ─────────────────────────────────────────────────────────────────
+function buildFunnel(data){
+  const total = DATA.length; // funnel always relative to full dataset
+  const stages = [
+    { key:'po',   label:'PO',       cls:'fc-po',  count: data.length },
+    { key:'so',   label:'SO',       cls:'fc-so',  count: data.filter(d=>d.so).length },
+    { key:'obd',  label:'OBD',      cls:'fc-obd', count: data.filter(d=>d.obd).length },
+    { key:'appt', label:'Appt.',    cls:'fc-apt', count: data.filter(d=>d.appt==='Confirmed').length },
+    { key:'inv',  label:'Invoice',  cls:'fc-inv', count: data.reduce((s,d)=>s+d.invoices.length,0) },
+    { key:'asn',  label:'ASN',      cls:'fc-asn', count: data.reduce((s,d)=>s+d.invoices.filter(i=>i.asn).length,0) },
+    { key:'pod',  label:'POD',      cls:'fc-pod', count: data.filter(d=>d.pod==='Confirmed').length },
+    { key:'grn',  label:'GRN/GDN',  cls:'fc-grn', count: data.filter(d=>d.grn==='Accepted').length },
+    { key:'pay',  label:'Payment',  cls:'fc-pay', count: data.filter(d=>d.payment==='Paid').length },
+  ];
+  const base = stages[0].count || 1;
+  document.getElementById('funnelRow').innerHTML = stages.map(s => {
+    const pct = Math.round(s.count / base * 100);
+    return `<div class="f-card ${s.cls}${activeStage===s.key?' active':''}" onclick="setStage('${s.key}')">
+      <div class="fc-label">${s.label}</div>
+      <div class="fc-count">${s.count}</div>
+      <div class="fc-pct">${pct}% of POs</div>
+      <div class="fc-bar"><div class="fc-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Pipeline pill counts
+  const map = { all: DATA.length, po: stages[0].count, so: stages[1].count, obd: stages[2].count, appt: stages[3].count, inv: stages[4].count, asn: stages[5].count, pod: stages[6].count, grn: stages[7].count, pay: stages[8].count };
+  Object.entries(map).forEach(([k,v])=>{ const el=document.getElementById('pc-'+k); if(el) el.textContent=v; });
+}
+
+// ─── KPIs ───────────────────────────────────────────────────────────────────
+function buildKPIs(data){
+  document.getElementById('kTotal').textContent   = data.length;
+  document.getElementById('kSO').textContent      = data.filter(d=>d.so).length;
+  document.getElementById('kInv').textContent     = data.reduce((s,d)=>s+d.invoices.length,0);
+  document.getElementById('kASN').textContent     = data.reduce((s,d)=>s+d.invoices.filter(i=>i.asn).length,0);
+  document.getElementById('kPOD').textContent     = data.filter(d=>d.pod==='Confirmed').length;
+  document.getElementById('kGRN').textContent     = data.filter(d=>d.grn==='Accepted').length;
+  const avgFill = data.length ? (data.reduce((s,d)=>s+d.fillPct,0)/data.length).toFixed(1) : 0;
+  const avgTAT  = data.length ? (data.reduce((s,d)=>s+d.tat,0)/data.length).toFixed(1) : 0;
+  document.getElementById('kFill').textContent    = avgFill + '%';
+  document.getElementById('kTAT').textContent     = avgTAT + 'd';
+  document.getElementById('kPaid').textContent    = data.filter(d=>d.payment==='Paid').length;
+  document.getElementById('kDispute').textContent = data.filter(d=>d.payment==='Dispute').length;
+}
+
+// ─── SIDE PANELS ────────────────────────────────────────────────────────────
+function buildSide(data){
+  const total   = data.length || 1;
+  const paid    = data.filter(d=>d.payment==='Paid').length;
+  const dispute = data.filter(d=>d.payment==='Dispute').length;
+  const pending = data.filter(d=>d.payment==='Pending').length;
+  const partial = data.filter(d=>d.payment==='Partial').length;
+
+  const payRows = [
+    { lbl:'Paid',    cnt: paid,    dot:'#22c55e', bar:'#22c55e' },
+    { lbl:'Pending', cnt: pending, dot:'#f59e0b', bar:'#f59e0b' },
+    { lbl:'Dispute', cnt: dispute, dot:'#ef4444', bar:'#ef4444' },
+    { lbl:'Partial', cnt: partial, dot:'#3b82f6', bar:'#3b82f6' },
+  ];
+  document.getElementById('sidePayment').innerHTML = payRows.map(r => {
+    const pct = Math.round(r.cnt / total * 100);
+    return `<div class="pay-row">
+      <div class="pr-label"><div class="pay-dot" style="background:${r.dot}"></div>${r.lbl}</div>
+      <div style="text-align:right;">
+        <div class="pr-val">${r.cnt} <span class="muted">(${pct}%)</span></div>
+        <div class="pr-bar" style="width:80px;margin-left:auto;"><div class="pr-fill" style="background:${r.bar};width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Dispute reasons
+  const reasons = {};
+  data.filter(d=>d.disputeReason).forEach(d=>{ reasons[d.disputeReason] = (reasons[d.disputeReason]||0)+1; });
+  const maxR = Math.max(...Object.values(reasons), 1);
+  const disputeEl = document.getElementById('sideDispute');
+  if(!Object.keys(reasons).length){
+    disputeEl.innerHTML = '<div class="muted" style="padding:6px 0;">No disputes in current filter</div>';
+  } else {
+    disputeEl.innerHTML = Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,c]) => `
+      <div class="d-item">
+        <div class="d-top"><span class="d-lbl">${r}</span><span class="d-val">${c} POs</span></div>
+        <div class="d-bar"><div class="d-fill" style="width:${Math.round(c/maxR*100)}%"></div></div>
+      </div>`).join('');
+  }
+
+  // Alerts
+  const alerts = [];
+  const aged     = data.filter(d=>d.payment==='Dispute' && d.outstanding > 0);
+  const pendPay  = data.filter(d=>d.payment==='Pending');
+  const shorts   = data.filter(d=>d.grn==='Short');
+  const reschedule = data.filter(d=>d.appt==='Rescheduled');
+  const podPend  = data.filter(d=>d.pod==='Pending');
+  if(aged.length)       alerts.push({cls:'a-red',   text:`<strong>${aged.length} POs</strong> with open dispute outstanding`});
+  if(pendPay.length)    alerts.push({cls:'a-amber',  text:`<strong>${pendPay.length} POs</strong> awaiting payment confirmation`});
+  if(shorts.length)     alerts.push({cls:'a-amber',  text:`<strong>${shorts.length} GRNs</strong> marked Short — deduction risk`});
+  if(reschedule.length) alerts.push({cls:'a-blue',   text:`<strong>${reschedule.length} appointments</strong> rescheduled`});
+  if(podPend.length)    alerts.push({cls:'a-blue',   text:`<strong>${podPend.length} PODs</strong> pending confirmation`});
+  if(!alerts.length)    alerts.push({cls:'a-green',  text:'All clear — no pending actions'});
+  document.getElementById('sideAlerts').innerHTML = alerts.map(a=>`
+    <div class="alert-item"><div class="a-dot ${a.cls}"></div><div class="a-text">${a.text}</div></div>`).join('');
+}
+
+// ─── TABLE ───────────────────────────────────────────────────────────────────
+function buildTable(data){
+  const start  = (page - 1) * PER_PAGE;
+  const slice  = data.slice(start, start + PER_PAGE);
+  const tbody  = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  slice.forEach(row => {
+    const invCount = row.invoices.length;
+    const asnCount = row.invoices.filter(i=>i.asn).length;
+    const totalVal = row.invoices.reduce((s,i)=>s+i.val, 0);
+
+    // Main row
+    const tr = document.createElement('tr');
+    tr.className = 'main-row';
+    tr.dataset.id = row.id;
+    tr.innerHTML = `
+      <td><button class="xbtn" data-id="${row.id}">+</button></td>
+      <td class="mono" style="color:#374151;">${row.id}</td>
+      <td>${row.account}</td>
+      <td>${chanBadge(row.channel)}</td>
+      <td class="muted">${row.warehouse}</td>
+      <td class="muted">${row.poDate}</td>
+      <td>${badge(row.so,'b-indigo')}</td>
+      <td>${badge(row.obd,'b-purple')}</td>
+      <td>${apptBadge(row.appt)}</td>
+      <td>
+        <span>${invCount} inv</span>
+        <span class="muted"> / ${asnCount} ASN</span>
+        <span class="muted" style="font-size:11px;display:block;">${fmt(totalVal)}</span>
+      </td>
+      <td>${podBadge(row.pod)}</td>
+      <td>${grnBadge(row.grn)}</td>
+      <td>${fillBar(row.fillPct)}</td>
+      <td>${tatBadge(row.tat)}</td>
+      <td>${payBadge(row.payment)}${row.disputeReason ? `<div style="font-size:10.5px;color:#dc2626;margin-top:2px;">${row.disputeReason}</div>` : ''}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // Sub row (hidden by default)
+    const subTr = document.createElement('tr');
+    subTr.className = 'sub-row';
+    subTr.dataset.for = row.id;
+    subTr.innerHTML = `
+      <td colspan="15">
+        <div class="sub-inner">
+          <table class="sub-table">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Invoice Date</th>
+                <th>Invoice Value</th>
+                <th>ASN #</th>
+                <th>ASN Date</th>
+                <th>Dispatched Qty</th>
+                <th>POD</th>
+                <th>GRN</th>
+                <th>Short Qty</th>
+                <th>Damage Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${row.invoices.map(inv => `
+                <tr>
+                  <td class="mono" style="color:#374151;">${inv.inv}</td>
+                  <td class="muted">${inv.date}</td>
+                  <td>${fmt(inv.val)}</td>
+                  <td class="mono" style="color:#374151;">${inv.asn || '—'}</td>
+                  <td class="muted">${inv.asnDate || '—'}</td>
+                  <td>${inv.qty}</td>
+                  <td>${podBadge(inv.pod)}</td>
+                  <td>${grnBadge(inv.grn)}</td>
+                  <td class="${inv.short > 0 ? 'red' : 'muted'}">${inv.short}</td>
+                  <td class="${inv.damage > 0 ? 'red' : 'muted'}">${inv.damage}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </td>`;
+    tbody.appendChild(subTr);
+  });
+
+  // Pagination
+  const total = data.length;
+  const maxPage = Math.max(1, Math.ceil(total / PER_PAGE));
+  document.getElementById('rowCount').textContent = `${total} records`;
+  document.getElementById('pageInfo').textContent = `Showing ${Math.min(start+1,total)}–${Math.min(start+PER_PAGE,total)} of ${total}`;
+  document.getElementById('pageNum').textContent  = page;
+  document.getElementById('btnPrev').disabled = page <= 1;
+  document.getElementById('btnNext').disabled = page >= maxPage;
+}
+
+// ─── EXPAND ROWS (event delegation — always works) ──────────────────────────
+document.getElementById('tableBody').addEventListener('click', function(e){
+  const btn = e.target.closest('.xbtn');
+  if(!btn) return;
+  const id    = btn.dataset.id;
+  const subTr = document.querySelector(`.sub-row[data-for="${id}"]`);
+  if(!subTr) return;
+  const open = subTr.classList.contains('visible');
+  subTr.classList.toggle('visible', !open);
+  btn.textContent = open ? '+' : '−';
+  btn.classList.toggle('open', !open);
+});
+
+// ─── FILTER ─────────────────────────────────────────────────────────────────
+function applyFilters(){
+  const q   = document.getElementById('searchInput').value.toLowerCase().trim();
+  const ch  = document.getElementById('channelFilter').value;
+  const acc = document.getElementById('accountFilter').value;
+  const pay = document.getElementById('payFilter').value;
+  const grn = document.getElementById('grnFilter').value;
+
+  filtered = DATA.filter(d => {
+    if(ch  !== 'all' && d.channel  !== ch)  return false;
+    if(acc !== 'all' && d.account  !== acc) return false;
+    if(pay !== 'all' && d.payment  !== pay) return false;
+    if(grn !== 'all' && d.grn      !== grn) return false;
+    if(q){
+      const haystack = [d.id, d.account, d.warehouse, d.so, d.obd].join(' ').toLowerCase();
+      if(!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Stage filter
+  if(activeStage !== 'all'){
+    const stageMap = {
+      po:   d => true,
+      so:   d => !!d.so,
+      obd:  d => !!d.obd,
+      appt: d => d.appt === 'Confirmed',
+      inv:  d => d.invoices.length > 0,
+      asn:  d => d.invoices.some(i => i.asn),
+      pod:  d => d.pod === 'Confirmed',
+      grn:  d => d.grn === 'Accepted',
+      pay:  d => d.payment === 'Paid',
+    };
+    if(stageMap[activeStage]) filtered = filtered.filter(stageMap[activeStage]);
+  }
+
+  if(sortKey) applySort();
+  page = 1;
+  render();
+}
+
+// ─── SORT ────────────────────────────────────────────────────────────────────
+function sortBy(key){
+  if(sortKey === key){ sortAsc = !sortAsc; } else { sortKey = key; sortAsc = true; }
+  applySort();
+  render();
+}
+function applySort(){
+  filtered.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(typeof av === 'string') av = av.toLowerCase(), bv = (bv||'').toLowerCase();
+    return sortAsc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+}
+
+// ─── STAGE FILTER ────────────────────────────────────────────────────────────
+function setStage(stage){
+  activeStage = stage;
+  document.querySelectorAll('.p-step').forEach(el =>
+    el.classList.toggle('active', el.dataset.stage === stage));
+  applyFilters();
+}
+
+// ─── PAGINATION ──────────────────────────────────────────────────────────────
+function changePage(dir){
+  const max = Math.ceil(filtered.length / PER_PAGE);
+  page = Math.max(1, Math.min(max, page + dir));
+  render();
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportCSV(){
+  const headers = ['PO #','Account','Channel','Warehouse','PO Date','SO Ref','OBD','Appointment','Invoices','ASNs','POD','GRN','Fill %','TAT (days)','Payment Status','Dispute Reason','Outstanding (INR)'];
+  const rows = filtered.map(d => [
+    d.id, d.account, d.channel, d.warehouse, d.poDate, d.so, d.obd, d.appt,
+    d.invoices.length, d.invoices.filter(i=>i.asn).length,
+    d.pod, d.grn, d.fillPct+'%', d.tat+'d', d.payment,
+    d.disputeReason||'', d.outstanding
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `O2D_Dashboard_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  buildFunnel(filtered);
+  buildKPIs(filtered);
+  buildSide(filtered);
+  buildTable(filtered);
+}
+
+render();
+</script>
+</body>
+</html>
