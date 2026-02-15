@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order to Cash Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #1a1a1a;
+            font-size: 14px;
+            padding-top: 70px;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .hub-title {
+            color: #000;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-buttons button {
+            padding: 8px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .header-buttons button:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header h1 {
+            color: #1a1a1a;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn-outline:hover {
+            background: #f8f9fa;
+            color: #495057;
+        }
+        
+        .controls {
+            background: white;
+            padding: 16px 32px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .controls-left {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-filter input, .date-filter select {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 8px 16px 8px 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            width: 300px;
+        }
+        
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .summary-stats {
+            background: white;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 24px;
+        }
+        
+        .stat-card {
+            text-align: left;
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card .label {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .stat-card .sublabel {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .table-section {
+            background: white;
+            padding: 0 32px 32px 32px;
+        }
+        
+        .table-container {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            min-width: 80px;
+            display: inline-block;
+        }
+        
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-in-progress { background: #d1ecf1; color: #0c5460; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-dispute { background: #ffeaa7; color: #8b6914; }
+        .status-paid { background: #b8e7d4; color: #0d5c3e; }
+        .status-partial { background: #e0cffc; color: #5b21b6; }
+        
+        .account-name {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .po-number {
+            font-family: 'Courier New', monospace;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clickable:hover {
+            color: #007bff;
+            text-decoration: underline;
+        }
+        
+        .metric-number {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .expandable-row {
+            display: none;
+            background: #f8f9fa;
+        }
+
+        .expandable-row.expanded {
+            display: table-row;
+        }
+
+        .expandable-content {
+            padding: 20px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .detail-card h4 {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .detail-card .value {
+            font-size: 16px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 60px;
+            right: 60px;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 0;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 0 10px;
+        }
+
+        .timeline-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .timeline-circle.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .timeline-circle.current {
+            background: #007bff;
+            color: white;
+        }
+
+        .timeline-circle.pending {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .timeline-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .timeline-date {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .sub-table {
+            margin-top: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .sub-table table {
+            margin: 0;
+        }
+
+        .sub-table th {
+            background: #ffffff;
+            font-size: 12px;
+        }
+
+        .sub-table td {
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .currency {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .tab-container {
+            background: white;
+            padding: 0 32px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab {
+            padding: 16px 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #495057;
+        }
+
+        .tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            background: #e9ecef;
+        }
+
+        .chip.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .dispute-reason {
+            font-size: 12px;
+            color: #dc3545;
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 1200px) {
+            .summary-stats {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .timeline {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .timeline::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="hub-title">Order to Cash Dashboard</span>
+        </div>
+        <div class="header-buttons">
+            <button onclick="window.location.reload()">Refresh</button>
+            <button onclick="exportToCSV()">Export CSV</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <div class="controls-left">
+                <div class="date-filter">
+                    <span style="color: #6c757d; font-weight: 500;">Date Range:</span>
+                    <input type="date" id="startDate" value="2025-01-01">
+                    <span style="color: #6c757d;">to</span>
+                    <input type="date" id="endDate" value="2025-02-15">
+                </div>
+                <div class="date-filter">
+                    <select id="channelFilter" onchange="filterData()">
+                        <option value="">All Channels</option>
+                        <option value="Modern Trade">Modern Trade</option>
+                        <option value="Quick Commerce">Quick Commerce</option>
+                        <option value="Ecommerce">Ecommerce</option>
+                    </select>
+                </div>
+                <div class="date-filter">
+                    <select id="statusFilter" onchange="filterData()">
+                        <option value="">All Statuses</option>
+                        <option value="Completed">Completed</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Disputed">Disputed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by PO, Customer, Account...">
+            </div>
+        </div>
+
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="number" id="totalPOs">0</div>
+                <div class="label">Total Purchase Orders</div>
+                <div class="sublabel">Across all channels</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalSOs">0</div>
+                <div class="label">Sales Orders Created</div>
+                <div class="sublabel">PO conversion rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalInvoices">0</div>
+                <div class="label">Invoices Generated</div>
+                <div class="sublabel">Multiple per SO</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalASNs">0</div>
+                <div class="label">ASN Dispatched</div>
+                <div class="sublabel">Shipment notices</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="deliveryRate">0%</div>
+                <div class="label">Delivery Success Rate</div>
+                <div class="sublabel">POD confirmed</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="paymentRate">0%</div>
+                <div class="label">Payment Received</div>
+                <div class="sublabel">Including disputes</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="avgCycleTime">0</div>
+                <div class="label">Avg Cycle Time</div>
+                <div class="sublabel">PO to Payment</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="disputeCount">0</div>
+                <div class="label">Active Disputes</div>
+                <div class="sublabel">Pending resolution</div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('overview')">Overview</div>
+                <div class="tab" onclick="switchTab('detailed')">Detailed View</div>
+                <div class="tab" onclick="switchTab('disputes')">Disputes & Issues</div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content active">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>PO Number</th>
+                                <th>Account</th>
+                                <th>Customer</th>
+                                <th>Channel</th>
+                                <th>PO Date</th>
+                                <th>SO Status</th>
+                                <th>Invoice</th>
+                                <th>ASN</th>
+                                <th>Delivery</th>
+                                <th>Payment</th>
+                                <th>Cycle Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overviewTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detailed View Tab -->
+            <div id="detailed-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>PO Number</th>
+                                <th>Account</th>
+                                <th>PO Value</th>
+                                <th>SO Count</th>
+                                <th>Invoice Count</th>
+                                <th>ASN Count</th>
+                                <th>Delivery Status</th>
+                                <th>GRN Status</th>
+                                <th>Payment Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailedTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Disputes Tab -->
+            <div id="disputes-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Account</th>
+                                <th>Invoice Number</th>
+                                <th>Invoice Amount</th>
+                                <th>Dispute Reason</th>
+                                <th>Raised Date</th>
+                                <th>Age (Days)</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disputesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data representing the complete O2C flow
+        const orderData = [
+            {
+                poNumber: "PO-2025-0001",
+                accountName: "Blinkit",
+                customerName: "Warehouse No 1. Sahib warehousing",
+                channel: "Quick Commerce",
+                poDate: "2025-01-15",
+                poValue: 2450000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0001"],
+                soStatus: "Completed",
+                soDate: "2025-01-16",
+                obdStatus: "Completed",
+                obdDate: "2025-01-16",
+                skuDetails: [
+                    { sku: "SKU-001", name: "Product A 500g", poQty: 500, soQty: 500, invoicedQty: 500, dispatchedQty: 500, deliveredQty: 500, grnQty: 500 },
+                    { sku: "SKU-002", name: "Product B 1kg", poQty: 300, soQty: 300, invoicedQty: 300, dispatchedQty: 300, deliveredQty: 300, grnQty: 300 },
+                    { sku: "SKU-003", name: "Product C 250g", poQty: 800, soQty: 800, invoicedQty: 800, dispatchedQty: 800, deliveredQty: 800, grnQty: 800 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-17",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0001", amount: 1225000, date: "2025-01-16", status: "Paid" },
+                    { number: "INV-2025-0002", amount: 1225000, date: "2025-01-17", status: "Paid" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0001", date: "2025-01-17", status: "Delivered" },
+                    { number: "ASN-2025-0002", date: "2025-01-18", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-19",
+                grnStatus: "Completed",
+                grnDate: "2025-01-19",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-19",
+                paymentStatus: "Paid",
+                paymentDate: "2025-01-28",
+                paymentAmount: 2450000,
+                cycleTime: 13,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0002",
+                accountName: "BigBasket",
+                customerName: "bigbasket Warehouse (BBPU)",
+                channel: "Ecommerce",
+                poDate: "2025-01-16",
+                poValue: 3200000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0002"],
+                soStatus: "Completed",
+                soDate: "2025-01-17",
+                obdStatus: "Completed",
+                obdDate: "2025-01-17",
+                skuDetails: [
+                    { sku: "SKU-004", name: "Product D 750g", poQty: 600, soQty: 600, invoicedQty: 600, dispatchedQty: 600, deliveredQty: 600, grnQty: 600 },
+                    { sku: "SKU-005", name: "Product E 500g", poQty: 450, soQty: 450, invoicedQty: 450, dispatchedQty: 450, deliveredQty: 450, grnQty: 450 },
+                    { sku: "SKU-006", name: "Product F 1kg", poQty: 350, soQty: 350, invoicedQty: 350, dispatchedQty: 350, deliveredQty: 350, grnQty: 350 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-19",
+                invoiceCount: 3,
+                invoices: [
+                    { number: "INV-2025-0003", amount: 1100000, date: "2025-01-17", status: "Paid" },
+                    { number: "INV-2025-0004", amount: 1050000, date: "2025-01-18", status: "Disputed", disputeReason: "Tax withhold - TDS mismatch" },
+                    { number: "INV-2025-0005", amount: 1050000, date: "2025-01-18", status: "Paid" }
+                ],
+                asnCount: 3,
+                asns: [
+                    { number: "ASN-2025-0003", date: "2025-01-19", status: "Delivered" },
+                    { number: "ASN-2025-0004", date: "2025-01-20", status: "Delivered" },
+                    { number: "ASN-2025-0005", date: "2025-01-20", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-22",
+                grnStatus: "Completed",
+                grnDate: "2025-01-22",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-22",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-05",
+                paymentAmount: 2150000,
+                cycleTime: 20,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0004",
+                        amount: 1050000,
+                        reason: "Tax withhold - TDS mismatch",
+                        raisedDate: "2025-01-25",
+                        age: 21,
+                        status: "Under Review",
+                        actionRequired: "Submit TDS certificate"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0003",
+                accountName: "DMart",
+                customerName: "SND Warehousing Complex - 1",
+                channel: "Modern Trade",
+                poDate: "2025-01-18",
+                poValue: 5600000,
+                soCount: 2,
+                soNumbers: ["PO-2025-0003-A", "PO-2025-0003-B"],
+                soStatus: "Completed",
+                soDate: "2025-01-19",
+                obdStatus: "Completed",
+                obdDate: "2025-01-19",
+                skuDetails: [
+                    { sku: "SKU-007", name: "Product G 500g", poQty: 1000, soQty: 1000, invoicedQty: 1000, dispatchedQty: 1000, deliveredQty: 950, grnQty: 950 },
+                    { sku: "SKU-008", name: "Product H 1kg", poQty: 700, soQty: 700, invoicedQty: 700, dispatchedQty: 700, deliveredQty: 680, grnQty: 680 },
+                    { sku: "SKU-009", name: "Product I 250g", poQty: 1200, soQty: 1200, invoicedQty: 1200, dispatchedQty: 1200, deliveredQty: 1200, grnQty: 1200 },
+                    { sku: "SKU-010", name: "Product J 750g", poQty: 500, soQty: 500, invoicedQty: 500, dispatchedQty: 500, deliveredQty: 470, grnQty: 470 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-21",
+                invoiceCount: 4,
+                invoices: [
+                    { number: "INV-2025-0006", amount: 1400000, date: "2025-01-19", status: "Paid" },
+                    { number: "INV-2025-0007", amount: 1400000, date: "2025-01-20", status: "Paid" },
+                    { number: "INV-2025-0008", amount: 1400000, date: "2025-01-21", status: "Disputed", disputeReason: "Deductions not matching - Short delivery claimed" },
+                    { number: "INV-2025-0009", amount: 1400000, date: "2025-01-21", status: "Paid" }
+                ],
+                asnCount: 4,
+                asns: [
+                    { number: "ASN-2025-0006", date: "2025-01-21", status: "Delivered" },
+                    { number: "ASN-2025-0007", date: "2025-01-22", status: "Delivered" },
+                    { number: "ASN-2025-0008", date: "2025-01-22", status: "Delivered" },
+                    { number: "ASN-2025-0009", date: "2025-01-23", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-25",
+                grnStatus: "Partial",
+                grnDate: "2025-01-25",
+                gdnStatus: "Partial",
+                gdnDate: "2025-01-25",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-08",
+                paymentAmount: 4200000,
+                cycleTime: 21,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0008",
+                        amount: 1400000,
+                        reason: "Deductions not matching - Short delivery claimed",
+                        raisedDate: "2025-01-28",
+                        age: 18,
+                        status: "Under Review",
+                        actionRequired: "Provide delivery proof"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0004",
+                accountName: "Zepto",
+                customerName: "Zepto - MEDAK, Telangana",
+                channel: "Quick Commerce",
+                poDate: "2025-01-20",
+                poValue: 1800000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0004"],
+                soStatus: "Completed",
+                soDate: "2025-01-21",
+                obdStatus: "Completed",
+                obdDate: "2025-01-21",
+                skuDetails: [
+                    { sku: "SKU-011", name: "Product K 500g", poQty: 400, soQty: 400, invoicedQty: 400, dispatchedQty: 400, deliveredQty: 400, grnQty: 400 },
+                    { sku: "SKU-012", name: "Product L 1kg", poQty: 250, soQty: 250, invoicedQty: 250, dispatchedQty: 250, deliveredQty: 250, grnQty: 250 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-22",
+                invoiceCount: 1,
+                invoices: [
+                    { number: "INV-2025-0010", amount: 1800000, date: "2025-01-21", status: "Paid" }
+                ],
+                asnCount: 1,
+                asns: [
+                    { number: "ASN-2025-0010", date: "2025-01-22", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-23",
+                grnStatus: "Completed",
+                grnDate: "2025-01-23",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-23",
+                paymentStatus: "Paid",
+                paymentDate: "2025-01-30",
+                paymentAmount: 1800000,
+                cycleTime: 10,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0005",
+                accountName: "Swiggy Instamart",
+                customerName: "SCOOTSY LOGISTICS PRIVATE",
+                channel: "Quick Commerce",
+                poDate: "2025-01-22",
+                poValue: 2100000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0005"],
+                soStatus: "Completed",
+                soDate: "2025-01-23",
+                obdStatus: "Completed",
+                obdDate: "2025-01-23",
+                skuDetails: [
+                    { sku: "SKU-013", name: "Product M 750g", poQty: 350, soQty: 350, invoicedQty: 350, dispatchedQty: 350, deliveredQty: 350, grnQty: 350 },
+                    { sku: "SKU-014", name: "Product N 500g", poQty: 450, soQty: 450, invoicedQty: 450, dispatchedQty: 450, deliveredQty: 450, grnQty: 450 },
+                    { sku: "SKU-015", name: "Product O 250g", poQty: 600, soQty: 600, invoicedQty: 350, dispatchedQty: 350, deliveredQty: 350, grnQty: 350 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-24",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0011", amount: 1050000, date: "2025-01-23", status: "Paid" },
+                    { number: "INV-2025-0012", amount: 1050000, date: "2025-01-24", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0011", date: "2025-01-24", status: "Delivered" },
+                    { number: "ASN-2025-0012", date: "2025-01-25", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-26",
+                grnStatus: "Completed",
+                grnDate: "2025-01-26",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-26",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-02",
+                paymentAmount: 1050000,
+                cycleTime: 11,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0006",
+                accountName: "Walmart",
+                customerName: "Cash N Carry - Amristar",
+                channel: "Modern Trade",
+                poDate: "2025-01-24",
+                poValue: 4800000,
+                soCount: 2,
+                soNumbers: ["PO-2025-0006-A", "PO-2025-0006-B"],
+                soStatus: "Completed",
+                soDate: "2025-01-25",
+                obdStatus: "Completed",
+                obdDate: "2025-01-25",
+                skuDetails: [
+                    { sku: "SKU-016", name: "Product P 1kg", poQty: 800, soQty: 800, invoicedQty: 800, dispatchedQty: 800, deliveredQty: 800, grnQty: 800 },
+                    { sku: "SKU-017", name: "Product Q 500g", poQty: 650, soQty: 650, invoicedQty: 650, dispatchedQty: 650, deliveredQty: 650, grnQty: 650 },
+                    { sku: "SKU-018", name: "Product R 750g", poQty: 550, soQty: 550, invoicedQty: 550, dispatchedQty: 550, deliveredQty: 550, grnQty: 550 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-27",
+                invoiceCount: 3,
+                invoices: [
+                    { number: "INV-2025-0013", amount: 1600000, date: "2025-01-25", status: "Paid" },
+                    { number: "INV-2025-0014", amount: 1600000, date: "2025-01-26", status: "Paid" },
+                    { number: "INV-2025-0015", amount: 1600000, date: "2025-01-27", status: "Disputed", disputeReason: "Price mismatch - Promotional discount not applied" }
+                ],
+                asnCount: 3,
+                asns: [
+                    { number: "ASN-2025-0013", date: "2025-01-27", status: "Delivered" },
+                    { number: "ASN-2025-0014", date: "2025-01-28", status: "Delivered" },
+                    { number: "ASN-2025-0015", date: "2025-01-29", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-31",
+                grnStatus: "Completed",
+                grnDate: "2025-01-31",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-31",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-10",
+                paymentAmount: 3200000,
+                cycleTime: 17,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0015",
+                        amount: 1600000,
+                        reason: "Price mismatch - Promotional discount not applied",
+                        raisedDate: "2025-02-03",
+                        age: 12,
+                        status: "Under Review",
+                        actionRequired: "Verify pricing agreement"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0007",
+                accountName: "Reliance Fresh",
+                customerName: "BLR-Nelamangala-DRYMH",
+                channel: "Modern Trade",
+                poDate: "2025-01-26",
+                poValue: 3500000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0007"],
+                soStatus: "In Progress",
+                soDate: "2025-01-27",
+                obdStatus: "In Progress",
+                obdDate: "2025-01-27",
+                skuDetails: [
+                    { sku: "SKU-019", name: "Product S 500g", poQty: 700, soQty: 700, invoicedQty: 700, dispatchedQty: 0, deliveredQty: 0, grnQty: 0 },
+                    { sku: "SKU-020", name: "Product T 1kg", poQty: 500, soQty: 500, invoicedQty: 500, dispatchedQty: 0, deliveredQty: 0, grnQty: 0 },
+                    { sku: "SKU-021", name: "Product U 250g", poQty: 900, soQty: 900, invoicedQty: 900, dispatchedQty: 0, deliveredQty: 0, grnQty: 0 }
+                ],
+                appointmentStatus: "Scheduled",
+                appointmentDate: "2025-02-17",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0016", amount: 1750000, date: "2025-01-27", status: "Pending" },
+                    { number: "INV-2025-0017", amount: 1750000, date: "2025-01-28", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0016", date: "2025-02-16", status: "In Transit" },
+                    { number: "ASN-2025-0017", date: "2025-02-16", status: "In Transit" }
+                ],
+                podStatus: "Pending",
+                podDate: null,
+                grnStatus: "Pending",
+                grnDate: null,
+                gdnStatus: "Pending",
+                gdnDate: null,
+                paymentStatus: "Pending",
+                paymentDate: null,
+                paymentAmount: 0,
+                cycleTime: null,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                customerName: "Kanjur Marg FC Avenue E-Commerce",
+                channel: "Modern Trade",
+                poDate: "2025-01-28",
+                poValue: 4200000,
+                soCount: 2,
+                soNumbers: ["PO-2025-0008-A", "PO-2025-0008-B"],
+                soStatus: "Completed",
+                soDate: "2025-01-29",
+                obdStatus: "Completed",
+                obdDate: "2025-01-29",
+                skuDetails: [
+                    { sku: "SKU-022", name: "Product V 750g", poQty: 600, soQty: 600, invoicedQty: 600, dispatchedQty: 600, deliveredQty: 550, grnQty: 550 },
+                    { sku: "SKU-023", name: "Product W 500g", poQty: 750, soQty: 750, invoicedQty: 750, dispatchedQty: 750, deliveredQty: 750, grnQty: 750 },
+                    { sku: "SKU-024", name: "Product X 1kg", poQty: 450, soQty: 450, invoicedQty: 450, dispatchedQty: 450, deliveredQty: 450, grnQty: 450 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-31",
+                invoiceCount: 4,
+                invoices: [
+                    { number: "INV-2025-0018", amount: 1050000, date: "2025-01-29", status: "Disputed", disputeReason: "Quality issue - Damaged goods reported" },
+                    { number: "INV-2025-0019", amount: 1050000, date: "2025-01-30", status: "Paid" },
+                    { number: "INV-2025-0020", amount: 1050000, date: "2025-01-31", status: "Paid" },
+                    { number: "INV-2025-0021", amount: 1050000, date: "2025-02-01", status: "Paid" }
+                ],
+                asnCount: 4,
+                asns: [
+                    { number: "ASN-2025-0018", date: "2025-01-31", status: "Delivered" },
+                    { number: "ASN-2025-0019", date: "2025-02-01", status: "Delivered" },
+                    { number: "ASN-2025-0020", date: "2025-02-02", status: "Delivered" },
+                    { number: "ASN-2025-0021", date: "2025-02-02", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-02-04",
+                grnStatus: "Partial",
+                grnDate: "2025-02-04",
+                gdnStatus: "Partial",
+                gdnDate: "2025-02-04",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-12",
+                paymentAmount: 3150000,
+                cycleTime: 15,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0018",
+                        amount: 1050000,
+                        reason: "Quality issue - Damaged goods reported",
+                        raisedDate: "2025-02-05",
+                        age: 10,
+                        status: "Under Investigation",
+                        actionRequired: "Inspect returned goods"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0009",
+                accountName: "Spencer's",
+                customerName: "HANDS ON TRADES PRIVATE",
+                channel: "Modern Trade",
+                poDate: "2025-01-30",
+                poValue: 2900000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0009"],
+                soStatus: "Completed",
+                soDate: "2025-01-31",
+                obdStatus: "Completed",
+                obdDate: "2025-01-31",
+                skuDetails: [
+                    { sku: "SKU-025", name: "Product Y 500g", poQty: 550, soQty: 550, invoicedQty: 550, dispatchedQty: 550, deliveredQty: 550, grnQty: 550 },
+                    { sku: "SKU-026", name: "Product Z 1kg", poQty: 400, soQty: 400, invoicedQty: 400, dispatchedQty: 400, deliveredQty: 400, grnQty: 400 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-02-02",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0022", amount: 1450000, date: "2025-01-31", status: "Pending" },
+                    { number: "INV-2025-0023", amount: 1450000, date: "2025-02-01", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0022", date: "2025-02-02", status: "Delivered" },
+                    { number: "ASN-2025-0023", date: "2025-02-03", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-02-05",
+                grnStatus: "Completed",
+                grnDate: "2025-02-05",
+                gdnStatus: "Completed",
+                gdnDate: "2025-02-05",
+                paymentStatus: "Pending",
+                paymentDate: null,
+                paymentAmount: 0,
+                cycleTime: null,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0010",
+                accountName: "Blinkit",
+                customerName: "Warehouse No 2. North Delhi DC",
+                channel: "Quick Commerce",
+                poDate: "2025-02-01",
+                poValue: 2800000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0010"],
+                soStatus: "Completed",
+                soDate: "2025-02-02",
+                obdStatus: "Completed",
+                obdDate: "2025-02-02",
+                skuDetails: [
+                    { sku: "SKU-027", name: "Product AA 750g", poQty: 480, soQty: 480, invoicedQty: 480, dispatchedQty: 480, deliveredQty: 480, grnQty: 480 },
+                    { sku: "SKU-028", name: "Product AB 500g", poQty: 520, soQty: 520, invoicedQty: 520, dispatchedQty: 520, deliveredQty: 520, grnQty: 520 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-22",
+                invoiceCount: 1,
+                invoices: [
+                    { number: "INV-2025-0010", amount: 1800000, date: "2025-01-21", status: "Paid" }
+                ],
+                asnCount: 1,
+                asns: [
+                    { number: "ASN-2025-0010", date: "2025-01-22", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-23",
+                grnStatus: "Completed",
+                grnDate: "2025-01-23",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-23",
+                paymentStatus: "Paid",
+                paymentDate: "2025-01-30",
+                paymentAmount: 1800000,
+                cycleTime: 10,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0005",
+                accountName: "Swiggy Instamart",
+                customerName: "SCOOTSY LOGISTICS PRIVATE",
+                channel: "Quick Commerce",
+                poDate: "2025-01-22",
+                poValue: 2100000,
+                soCount: 1,
+                soNumbers: ["SO-2025-0006"],
+                soStatus: "Completed",
+                soDate: "2025-01-22",
+                obdStatus: "Completed",
+                obdDate: "2025-01-23",
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-24",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0011", amount: 1050000, date: "2025-01-23", status: "Paid" },
+                    { number: "INV-2025-0012", amount: 1050000, date: "2025-01-24", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0011", date: "2025-01-24", status: "Delivered" },
+                    { number: "ASN-2025-0012", date: "2025-01-25", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-26",
+                grnStatus: "Completed",
+                grnDate: "2025-01-26",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-26",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-02",
+                paymentAmount: 1050000,
+                cycleTime: 11,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0006",
+                accountName: "Walmart",
+                customerName: "Cash N Carry - Amristar",
+                channel: "Modern Trade",
+                poDate: "2025-01-24",
+                poValue: 4800000,
+                soCount: 2,
+                soNumbers: ["SO-2025-0007", "SO-2025-0008"],
+                soStatus: "Completed",
+                soDate: "2025-01-24",
+                obdStatus: "Completed",
+                obdDate: "2025-01-25",
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-27",
+                invoiceCount: 3,
+                invoices: [
+                    { number: "INV-2025-0013", amount: 1600000, date: "2025-01-25", status: "Paid" },
+                    { number: "INV-2025-0014", amount: 1600000, date: "2025-01-26", status: "Paid" },
+                    { number: "INV-2025-0015", amount: 1600000, date: "2025-01-27", status: "Disputed", disputeReason: "Price mismatch - Promotional discount not applied" }
+                ],
+                asnCount: 3,
+                asns: [
+                    { number: "ASN-2025-0013", date: "2025-01-27", status: "Delivered" },
+                    { number: "ASN-2025-0014", date: "2025-01-28", status: "Delivered" },
+                    { number: "ASN-2025-0015", date: "2025-01-29", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-01-31",
+                grnStatus: "Completed",
+                grnDate: "2025-01-31",
+                gdnStatus: "Completed",
+                gdnDate: "2025-01-31",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-10",
+                paymentAmount: 3200000,
+                cycleTime: 17,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0015",
+                        amount: 1600000,
+                        reason: "Price mismatch - Promotional discount not applied",
+                        raisedDate: "2025-02-03",
+                        age: 12,
+                        status: "Under Review",
+                        actionRequired: "Verify pricing agreement"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0007",
+                accountName: "Reliance Fresh",
+                customerName: "BLR-Nelamangala-DRYMH",
+                channel: "Modern Trade",
+                poDate: "2025-01-26",
+                poValue: 3500000,
+                soCount: 1,
+                soNumbers: ["SO-2025-0009"],
+                soStatus: "In Progress",
+                soDate: "2025-01-26",
+                obdStatus: "In Progress",
+                obdDate: "2025-01-27",
+                appointmentStatus: "Scheduled",
+                appointmentDate: "2025-02-17",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0016", amount: 1750000, date: "2025-01-27", status: "Pending" },
+                    { number: "INV-2025-0017", amount: 1750000, date: "2025-01-28", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0016", date: "2025-02-16", status: "In Transit" },
+                    { number: "ASN-2025-0017", date: "2025-02-16", status: "In Transit" }
+                ],
+                podStatus: "Pending",
+                podDate: null,
+                grnStatus: "Pending",
+                grnDate: null,
+                gdnStatus: "Pending",
+                gdnDate: null,
+                paymentStatus: "Pending",
+                paymentDate: null,
+                paymentAmount: 0,
+                cycleTime: null,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                customerName: "Kanjur Marg FC Avenue E-Commerce",
+                channel: "Modern Trade",
+                poDate: "2025-01-28",
+                poValue: 4200000,
+                soCount: 2,
+                soNumbers: ["SO-2025-0010", "SO-2025-0011"],
+                soStatus: "Completed",
+                soDate: "2025-01-28",
+                obdStatus: "Completed",
+                obdDate: "2025-01-29",
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-01-31",
+                invoiceCount: 4,
+                invoices: [
+                    { number: "INV-2025-0018", amount: 1050000, date: "2025-01-29", status: "Disputed", disputeReason: "Quality issue - Damaged goods reported" },
+                    { number: "INV-2025-0019", amount: 1050000, date: "2025-01-30", status: "Paid" },
+                    { number: "INV-2025-0020", amount: 1050000, date: "2025-01-31", status: "Paid" },
+                    { number: "INV-2025-0021", amount: 1050000, date: "2025-02-01", status: "Paid" }
+                ],
+                asnCount: 4,
+                asns: [
+                    { number: "ASN-2025-0018", date: "2025-01-31", status: "Delivered" },
+                    { number: "ASN-2025-0019", date: "2025-02-01", status: "Delivered" },
+                    { number: "ASN-2025-0020", date: "2025-02-02", status: "Delivered" },
+                    { number: "ASN-2025-0021", date: "2025-02-02", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-02-04",
+                grnStatus: "Partial",
+                grnDate: "2025-02-04",
+                gdnStatus: "Partial",
+                gdnDate: "2025-02-04",
+                paymentStatus: "Partial",
+                paymentDate: "2025-02-12",
+                paymentAmount: 3150000,
+                cycleTime: 15,
+                disputes: [
+                    {
+                        invoiceNumber: "INV-2025-0018",
+                        amount: 1050000,
+                        reason: "Quality issue - Damaged goods reported",
+                        raisedDate: "2025-02-05",
+                        age: 10,
+                        status: "Under Investigation",
+                        actionRequired: "Inspect returned goods"
+                    }
+                ]
+            },
+            {
+                poNumber: "PO-2025-0009",
+                accountName: "Spencer's",
+                customerName: "HANDS ON TRADES PRIVATE",
+                channel: "Modern Trade",
+                poDate: "2025-01-30",
+                poValue: 2900000,
+                soCount: 1,
+                soNumbers: ["SO-2025-0012"],
+                soStatus: "Completed",
+                soDate: "2025-01-30",
+                obdStatus: "Completed",
+                obdDate: "2025-01-31",
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-02-02",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0022", amount: 1450000, date: "2025-01-31", status: "Pending" },
+                    { number: "INV-2025-0023", amount: 1450000, date: "2025-02-01", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0022", date: "2025-02-02", status: "Delivered" },
+                    { number: "ASN-2025-0023", date: "2025-02-03", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-02-05",
+                grnStatus: "Completed",
+                grnDate: "2025-02-05",
+                gdnStatus: "Completed",
+                gdnDate: "2025-02-05",
+                paymentStatus: "Pending",
+                paymentDate: null,
+                paymentAmount: 0,
+                cycleTime: null,
+                disputes: []
+            },
+            {
+                poNumber: "PO-2025-0010",
+                accountName: "Blinkit",
+                customerName: "Warehouse No 2. North Delhi DC",
+                channel: "Quick Commerce",
+                poDate: "2025-02-01",
+                poValue: 2800000,
+                soCount: 1,
+                soNumbers: ["PO-2025-0010"],
+                soStatus: "Completed",
+                soDate: "2025-02-02",
+                obdStatus: "Completed",
+                obdDate: "2025-02-02",
+                skuDetails: [
+                    { sku: "SKU-027", name: "Product AA 750g", poQty: 480, soQty: 480, invoicedQty: 480, dispatchedQty: 480, deliveredQty: 480, grnQty: 480 },
+                    { sku: "SKU-028", name: "Product AB 500g", poQty: 520, soQty: 520, invoicedQty: 520, dispatchedQty: 520, deliveredQty: 520, grnQty: 520 }
+                ],
+                appointmentStatus: "Completed",
+                appointmentDate: "2025-02-04",
+                invoiceCount: 2,
+                invoices: [
+                    { number: "INV-2025-0024", amount: 1400000, date: "2025-02-02", status: "Pending" },
+                    { number: "INV-2025-0025", amount: 1400000, date: "2025-02-03", status: "Pending" }
+                ],
+                asnCount: 2,
+                asns: [
+                    { number: "ASN-2025-0024", date: "2025-02-04", status: "Delivered" },
+                    { number: "ASN-2025-0025", date: "2025-02-05", status: "Delivered" }
+                ],
+                podStatus: "Received",
+                podDate: "2025-02-07",
+                grnStatus: "Completed",
+                grnDate: "2025-02-07",
+                gdnStatus: "Completed",
+                gdnDate: "2025-02-07",
+                paymentStatus: "Pending",
+                paymentDate: null,
+                paymentAmount: 0,
+                cycleTime: null,
+                disputes: []
+            }
+        ];
+
+        let filteredData = [...orderData];
+
+        function formatCurrency(amount) {
+            return '₹' + (amount / 100000).toFixed(2) + 'L';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'Completed': 'status-completed',
+                'In Progress': 'status-in-progress',
+                'Pending': 'status-pending',
+                'Scheduled': 'status-pending',
+                'Paid': 'status-paid',
+                'Partial': 'status-partial',
+                'Disputed': 'status-dispute',
+                'Delivered': 'status-completed',
+                'In Transit': 'status-in-progress',
+                'Received': 'status-completed'
+            };
+            return `<span class="status-badge ${statusMap[status] || 'status-pending'}">${status}</span>`;
+        }
+
+        function populateOverviewTable(data = filteredData) {
+            const tbody = document.getElementById('overviewTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="expand-icon" id="expand-${index}">▶</span></td>
+                    <td class="po-number clickable">${order.poNumber}</td>
+                    <td class="account-name">${order.accountName}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.channel}</td>
+                    <td>${formatDate(order.poDate)}</td>
+                    <td>${getStatusBadge(order.soStatus)}</td>
+                    <td class="metric-number">${order.invoiceCount}</td>
+                    <td class="metric-number">${order.asnCount}</td>
+                    <td>${getStatusBadge(order.podStatus)}</td>
+                    <td>${getStatusBadge(order.paymentStatus)}</td>
+                    <td class="metric-number">${order.cycleTime ? order.cycleTime + ' days' : '-'}</td>
+                `;
+                tr.onclick = () => toggleExpand(index);
+                tbody.appendChild(tr);
+
+                // Expandable row
+                const expandTr = document.createElement('tr');
+                expandTr.className = 'expandable-row';
+                expandTr.id = `expandable-${index}`;
+                expandTr.innerHTML = `
+                    <td colspan="12">
+                        <div class="expandable-content">
+                            ${generateExpandedContent(order)}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(expandTr);
+            });
+        }
+
+        function generateExpandedContent(order) {
+            const timeline = generateTimeline(order);
+            const invoiceTable = generateInvoiceTable(order.invoices);
+            const asnTable = generateASNTable(order.asns);
+            const skuTable = generateSKUTable(order.skuDetails);
+
+            return `
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <h4>PO Details</h4>
+                        <div class="value">${formatCurrency(order.poValue)}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Total Order Value</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Sales Orders</h4>
+                        <div class="value">${order.soNumbers.join(', ')}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">${order.soCount} SO(s) created</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Payment Status</h4>
+                        <div class="value">${formatCurrency(order.paymentAmount)}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Received of ${formatCurrency(order.poValue)}</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Outstanding</h4>
+                        <div class="value" style="color: ${order.poValue - order.paymentAmount > 0 ? '#dc3545' : '#28a745'}">
+                            ${formatCurrency(order.poValue - order.paymentAmount)}
+                        </div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Pending payment</div>
+                    </div>
+                </div>
+
+                ${timeline}
+
+                ${skuTable}
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+                    <div>
+                        <h4 style="margin-bottom: 12px; color: #495057;">Invoices (${order.invoiceCount})</h4>
+                        ${invoiceTable}
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 12px; color: #495057;">ASN / Shipments (${order.asnCount})</h4>
+                        ${asnTable}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateTimeline(order) {
+            const steps = [
+                { label: 'PO', date: order.poDate, status: 'completed' },
+                { label: 'SO', date: order.soDate, status: order.soStatus === 'Completed' ? 'completed' : order.soStatus === 'In Progress' ? 'current' : 'pending' },
+                { label: 'OBD', date: order.obdDate, status: order.obdStatus === 'Completed' ? 'completed' : order.obdStatus === 'In Progress' ? 'current' : 'pending' },
+                { label: 'Appointment', date: order.appointmentDate, status: order.appointmentStatus === 'Completed' ? 'completed' : order.appointmentStatus === 'Scheduled' ? 'current' : 'pending' },
+                { label: 'Invoice', date: order.invoices[0]?.date, status: order.invoices.some(i => i.status === 'Paid') ? 'completed' : 'current' },
+                { label: 'ASN', date: order.asns[0]?.date, status: order.asns.some(a => a.status === 'Delivered') ? 'completed' : order.asns.some(a => a.status === 'In Transit') ? 'current' : 'pending' },
+                { label: 'POD', date: order.podDate, status: order.podStatus === 'Received' ? 'completed' : 'pending' },
+                { label: 'GRN', date: order.grnDate, status: order.grnStatus === 'Completed' ? 'completed' : order.grnStatus === 'Partial' ? 'current' : 'pending' },
+                { label: 'Payment', date: order.paymentDate, status: order.paymentStatus === 'Paid' ? 'completed' : order.paymentStatus === 'Partial' ? 'current' : 'pending' }
+            ];
+
+            const stepsHTML = steps.map(step => `
+                <div class="timeline-step">
+                    <div class="timeline-circle ${step.status}">
+                        ${step.status === 'completed' ? '✓' : step.status === 'current' ? '●' : ''}
+                    </div>
+                    <div class="timeline-label">${step.label}</div>
+                    <div class="timeline-date">${formatDate(step.date)}</div>
+                </div>
+            `).join('');
+
+            return `<div class="timeline">${stepsHTML}</div>`;
+        }
+
+        function generateInvoiceTable(invoices) {
+            const rows = invoices.map(inv => `
+                <tr>
+                    <td style="font-family: monospace;">${inv.number}</td>
+                    <td class="amount">${formatCurrency(inv.amount)}</td>
+                    <td>${formatDate(inv.date)}</td>
+                    <td>${getStatusBadge(inv.status)}
+                        ${inv.disputeReason ? `<div class="dispute-reason">${inv.disputeReason}</div>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="sub-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function generateASNTable(asns) {
+            const rows = asns.map(asn => `
+                <tr>
+                    <td style="font-family: monospace;">${asn.number}</td>
+                    <td>${formatDate(asn.date)}</td>
+                    <td>${getStatusBadge(asn.status)}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="sub-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ASN #</th>
+                                <th>Dispatch Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function generateSKUTable(skuDetails) {
+            if (!skuDetails || !Array.isArray(skuDetails) || skuDetails.length === 0) {
+                return `<div style="padding: 20px; text-align: center; color: #6c757d;">No SKU details available</div>`;
+            }
+            
+            const rows = skuDetails.map(sku => {
+                const variance = sku.grnQty - sku.poQty;
+                const varianceClass = variance < 0 ? 'style="color: #dc3545; font-weight: 600;"' : '';
+                return `
+                <tr>
+                    <td style="font-family: monospace; font-weight: 500;">${sku.sku}</td>
+                    <td>${sku.name}</td>
+                    <td class="metric-number">${sku.poQty}</td>
+                    <td class="metric-number">${sku.soQty}</td>
+                    <td class="metric-number">${sku.invoicedQty}</td>
+                    <td class="metric-number">${sku.dispatchedQty}</td>
+                    <td class="metric-number">${sku.deliveredQty}</td>
+                    <td class="metric-number">${sku.grnQty}</td>
+                    <td class="metric-number" ${varianceClass}>${variance >= 0 ? '+' : ''}${variance}</td>
+                </tr>
+            `}).join('');
+
+            return `
+                <div class="sub-table" style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 12px; color: #495057; font-size: 14px;">SKU-Level Quantity Tracking</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU Code</th>
+                                <th>Product Name</th>
+                                <th>PO Qty</th>
+                                <th>SO Qty</th>
+                                <th>Invoiced</th>
+                                <th>Dispatched</th>
+                                <th>Delivered</th>
+                                <th>GRN Qty</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function toggleExpand(index) {
+            const expandRow = document.getElementById(`expandable-${index}`);
+            const expandIcon = document.getElementById(`expand-${index}`);
+            
+            if (expandRow.classList.contains('expanded')) {
+                expandRow.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                // Close all other expanded rows
+                document.querySelectorAll('.expandable-row.expanded').forEach(row => {
+                    row.classList.remove('expanded');
+                });
+                document.querySelectorAll('.expand-icon.expanded').forEach(icon => {
+                    icon.classList.remove('expanded');
+                });
+                
+                expandRow.classList.add('expanded');
+                expandIcon.classList.add('expanded');
+            }
+        }
+
+        function populateDetailedTable(data = filteredData) {
+            const tbody = document.getElementById('detailedTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="expand-icon" id="expand-detail-${index}">▶</span></td>
+                    <td class="po-number">${order.poNumber}</td>
+                    <td class="account-name">${order.accountName}</td>
+                    <td class="amount">${formatCurrency(order.poValue)}</td>
+                    <td class="metric-number">${order.soCount}</td>
+                    <td class="metric-number">${order.invoiceCount}</td>
+                    <td class="metric-number">${order.asnCount}</td>
+                    <td>${getStatusBadge(order.podStatus)}</td>
+                    <td>${getStatusBadge(order.grnStatus)}</td>
+                    <td>${getStatusBadge(order.paymentStatus)}</td>
+                    <td><button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="toggleDetailExpand(${index}, event)">View Details</button></td>
+                `;
+                tr.onclick = (e) => {
+                    if (!e.target.classList.contains('btn')) {
+                        toggleDetailExpand(index, e);
+                    }
+                };
+                tbody.appendChild(tr);
+
+                // Expandable row with SKU details
+                const expandTr = document.createElement('tr');
+                expandTr.className = 'expandable-row';
+                expandTr.id = `expandable-detail-${index}`;
+                
+                const skuDetails = order.skuDetails || [];
+                const totalPoQty = skuDetails.reduce((sum, sku) => sum + sku.poQty, 0);
+                const totalDeliveredQty = skuDetails.reduce((sum, sku) => sum + sku.deliveredQty, 0);
+                const totalGrnQty = skuDetails.reduce((sum, sku) => sum + sku.grnQty, 0);
+                const totalVariance = skuDetails.reduce((sum, sku) => sum + (sku.grnQty - sku.poQty), 0);
+                
+                expandTr.innerHTML = `
+                    <td colspan="11">
+                        <div class="expandable-content">
+                            ${generateSKUTable(order.skuDetails)}
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-top: 20px;">
+                                <div class="detail-card">
+                                    <h4>Total PO Quantity</h4>
+                                    <div class="value">${totalPoQty}</div>
+                                    <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Units ordered</div>
+                                </div>
+                                <div class="detail-card">
+                                    <h4>Total Delivered Quantity</h4>
+                                    <div class="value">${totalDeliveredQty}</div>
+                                    <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Units received</div>
+                                </div>
+                                <div class="detail-card">
+                                    <h4>GRN Quantity</h4>
+                                    <div class="value">${totalGrnQty}</div>
+                                    <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Goods receipt note</div>
+                                </div>
+                                <div class="detail-card">
+                                    <h4>Total Variance</h4>
+                                    <div class="value" style="color: ${totalVariance < 0 ? '#dc3545' : '#28a745'}">
+                                        ${totalVariance >= 0 ? '+' : ''}${totalVariance}
+                                    </div>
+                                    <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">GRN vs PO difference</div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(expandTr);
+            });
+        }
+
+        function toggleDetailExpand(index, event) {
+            if (event) event.stopPropagation();
+            const expandRow = document.getElementById(`expandable-detail-${index}`);
+            const expandIcon = document.getElementById(`expand-detail-${index}`);
+            
+            if (expandRow.classList.contains('expanded')) {
+                expandRow.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                // Close all other expanded rows
+                document.querySelectorAll('.expandable-row.expanded').forEach(row => {
+                    row.classList.remove('expanded');
+                });
+                document.querySelectorAll('.expand-icon.expanded').forEach(icon => {
+                    icon.classList.remove('expanded');
+                });
+                
+                expandRow.classList.add('expanded');
+                expandIcon.classList.add('expanded');
+            }
+        }
+
+        function populateDisputesTable() {
+            const tbody = document.getElementById('disputesTableBody');
+            tbody.innerHTML = '';
+            
+            const disputes = orderData.flatMap(order => 
+                order.disputes.map(dispute => ({
+                    ...dispute,
+                    poNumber: order.poNumber,
+                    accountName: order.accountName
+                }))
+            );
+
+            disputes.forEach(dispute => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="po-number">${dispute.poNumber}</td>
+                    <td class="account-name">${dispute.accountName}</td>
+                    <td style="font-family: monospace;">${dispute.invoiceNumber}</td>
+                    <td class="amount">${formatCurrency(dispute.amount)}</td>
+                    <td>${dispute.reason}</td>
+                    <td>${formatDate(dispute.raisedDate)}</td>
+                    <td class="metric-number" style="color: ${dispute.age > 15 ? '#dc3545' : '#495057'}">${dispute.age}</td>
+                    <td>${getStatusBadge(dispute.status)}</td>
+                    <td>${dispute.actionRequired}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSummaryStats(data = filteredData) {
+            const totalPOs = data.length;
+            const totalSOs = data.reduce((sum, o) => sum + o.soCount, 0);
+            const totalInvoices = data.reduce((sum, o) => sum + o.invoiceCount, 0);
+            const totalASNs = data.reduce((sum, o) => sum + o.asnCount, 0);
+            
+            const deliveredOrders = data.filter(o => o.podStatus === 'Received').length;
+            const deliveryRate = totalPOs > 0 ? ((deliveredOrders / totalPOs) * 100).toFixed(1) : 0;
+            
+            const paidOrders = data.filter(o => o.paymentStatus === 'Paid').length;
+            const paymentRate = totalPOs > 0 ? ((paidOrders / totalPOs) * 100).toFixed(1) : 0;
+            
+            const completedOrders = data.filter(o => o.cycleTime !== null);
+            const avgCycleTime = completedOrders.length > 0 
+                ? (completedOrders.reduce((sum, o) => sum + o.cycleTime, 0) / completedOrders.length).toFixed(1)
+                : 0;
+            
+            const activeDisputes = data.reduce((sum, o) => sum + o.disputes.length, 0);
+            
+            document.getElementById('totalPOs').textContent = totalPOs;
+            document.getElementById('totalSOs').textContent = totalSOs;
+            document.getElementById('totalInvoices').textContent = totalInvoices;
+            document.getElementById('totalASNs').textContent = totalASNs;
+            document.getElementById('deliveryRate').textContent = deliveryRate + '%';
+            document.getElementById('paymentRate').textContent = paymentRate + '%';
+            document.getElementById('avgCycleTime').textContent = avgCycleTime + ' days';
+            document.getElementById('disputeCount').textContent = activeDisputes;
+        }
+
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const channelFilter = document.getElementById('channelFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredData = orderData.filter(order => {
+                const matchesSearch = order.poNumber.toLowerCase().includes(searchTerm) ||
+                                    order.accountName.toLowerCase().includes(searchTerm) ||
+                                    order.customerName.toLowerCase().includes(searchTerm);
+                
+                const matchesChannel = !channelFilter || order.channel === channelFilter;
+                
+                const matchesStatus = !statusFilter || 
+                                    (statusFilter === 'Completed' && order.paymentStatus === 'Paid') ||
+                                    (statusFilter === 'In Progress' && order.soStatus === 'In Progress') ||
+                                    (statusFilter === 'Pending' && order.paymentStatus === 'Pending') ||
+                                    (statusFilter === 'Disputed' && order.disputes.length > 0);
+                
+                return matchesSearch && matchesChannel && matchesStatus;
+            });
+            
+            populateOverviewTable(filteredData);
+            populateDetailedTable(filteredData);
+            updateSummaryStats(filteredData);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function exportToCSV() {
+            const headers = ['PO Number', 'Account', 'Customer', 'Channel', 'PO Date', 'PO Value', 'SO Count', 'Invoice Count', 'ASN Count', 'Delivery Status', 'Payment Status', 'Payment Amount', 'Cycle Time', 'Disputes'];
+            
+            let csvContent = headers.join(',') + '\n';
+            
+            orderData.forEach(order => {
+                const csvRow = [
+                    `"${order.poNumber}"`,
+                    `"${order.accountName}"`,
+                    `"${order.customerName}"`,
+                    `"${order.channel}"`,
+                    order.poDate,
+                    order.poValue,
+                    order.soCount,
+                    order.invoiceCount,
+                    order.asnCount,
+                    order.podStatus,
+                    order.paymentStatus,
+                    order.paymentAmount,
+                    order.cycleTime || 'N/A',
+                    order.disputes.length
+                ].join(',');
+                csvContent += csvRow + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Order_to_Cash_Dashboard_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadReport() {
+            alert('Report generation feature - This would generate a comprehensive PDF report with all order details, timelines, and analytics.');
+        }
+
+        function filterByDate() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && endDate) {
+                filteredData = orderData.filter(order => {
+                    const orderDate = new Date(order.poDate);
+                    return orderDate >= new Date(startDate) && orderDate <= new Date(endDate);
+                });
+                
+                populateOverviewTable(filteredData);
+                populateDetailedTable(filteredData);
+                updateSummaryStats(filteredData);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        
+        // Initialize the dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            populateOverviewTable();
+            populateDetailedTable();
+            populateDisputesTable();
+            updateSummaryStats();
+        });
+    </script>
+</body>
+</html>
