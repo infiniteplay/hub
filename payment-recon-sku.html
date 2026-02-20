@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice to Cash — Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white:    #ffffff;
+      --bg:       #f7f8fa;
+      --surface:  #ffffff;
+      --border:   #eaecf0;
+      --border-2: #d8dce4;
+      --t1:       #1c2033;
+      --t2:       #5c6478;
+      --t3:       #a8aebf;
+      --accent:   #3b6ef0;
+      --accent-bg:#f0f5ff;
+      --red:      #d63b3b;
+      --red-bg:   #fff5f5;
+      --green:    #1f8255;
+      --green-bg: #f0faf6;
+      --amber:    #a06020;
+      --amber-bg: #fffbf0;
+      --sans:     'IBM Plex Sans', sans-serif;
+      --mono:     'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: var(--sans); font-size: 13px; color: var(--t1); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+    /* TOPBAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 48px;
+      background: var(--white); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px; z-index: 200;
+    }
+    .tb-brand { font-size: 14px; font-weight: 600; color: var(--t1); letter-spacing: -0.2px; }
+    .tb-sep { width: 1px; height: 16px; background: var(--border); }
+    .tb-title { font-size: 12px; color: var(--t3); font-weight: 400; }
+    .tb-acts { margin-left: auto; display: flex; gap: 8px; }
+    .tb-btn {
+      font-family: var(--sans); font-size: 12px; font-weight: 500;
+      padding: 5px 14px; border-radius: 5px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--white); color: var(--t2);
+      transition: all 0.12s;
+    }
+    .tb-btn:hover { background: var(--bg); color: var(--t1); border-color: var(--border-2); }
+    .tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tb-btn.primary:hover { background: #2d5edf; border-color: #2d5edf; }
+
+    /* LAYOUT */
+    .layout { display: flex; flex-direction: column; padding-top: 48px; height: 100vh; overflow: hidden; background: var(--bg); }
+
+    /* CONTROLS */
+    .ctrl-bar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      height: 44px; display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0;
+    }
+    .c-lbl { font-size: 11px; font-weight: 500; color: var(--t3); white-space: nowrap; }
+    .c-in, .c-sel {
+      font-family: var(--sans); font-size: 12px; color: var(--t1);
+      padding: 0 9px; height: 28px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: var(--white); outline: none; transition: border-color 0.12s;
+    }
+    .c-in:focus, .c-sel:focus { border-color: var(--accent); }
+    .c-in[type="date"] { width: 120px; }
+    .c-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .srch { position: relative; margin-left: auto; }
+    .srch svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--t3); pointer-events: none; }
+    .srch-in {
+      font-family: var(--sans); font-size: 12px; color: var(--t1);
+      padding: 0 10px 0 30px; height: 28px; width: 210px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: var(--white); outline: none; transition: border-color 0.12s, width 0.18s;
+    }
+    .srch-in:focus { border-color: var(--accent); width: 260px; }
+    .srch-in::placeholder { color: var(--t3); }
+
+    /* KPI */
+    .kpi-strip {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      height: 64px; display: flex; align-items: stretch;
+      flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+    }
+    .kpi-strip::-webkit-scrollbar { display: none; }
+    .kpi-item {
+      flex: 1 0 100px; display: flex; flex-direction: column;
+      justify-content: center; padding: 0 20px;
+      border-right: 1px solid var(--border);
+    }
+    .kpi-item:last-child { border-right: none; }
+    .kv { font-size: 18px; font-weight: 600; color: var(--t1); line-height: 1; white-space: nowrap; }
+    .kv.a { color: var(--accent); }
+    .kv.r { color: var(--red); }
+    .kv.g { color: var(--green); }
+    .kv.m { color: var(--amber); }
+    .kl { font-size: 10px; font-weight: 400; color: var(--t3); margin-top: 4px; white-space: nowrap; }
+
+    /* TABS */
+    .tab-bar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      height: 38px; display: flex; align-items: stretch; padding: 0 24px; flex-shrink: 0;
+    }
+    .tab-btn {
+      font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--t3);
+      background: none; border: none; padding: 0 14px; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: color 0.12s, border-color 0.12s; white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--t2); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* PANELS */
+    .panel { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    .panel.active { display: flex; }
+
+    /* TABLE WRAP */
+    .t-wrap { flex: 1; overflow: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+    .t-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+    .t-wrap::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    /* TABLE */
+    table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12px; }
+
+    /* Group header */
+    thead tr.grp th {
+      position: sticky; top: 0; z-index: 30;
+      height: 24px; padding: 0 12px;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.3px;
+      color: var(--t3); background: var(--bg);
+      border-bottom: 1px solid var(--border); border-right: 1px solid var(--border);
+      text-align: left; white-space: nowrap;
+    }
+    thead tr.grp th.gs { border-left: 1px solid var(--border-2); }
+
+    /* Column header */
+    thead tr.cols th {
+      position: sticky; top: 24px; z-index: 29;
+      height: 30px; padding: 0 12px;
+      font-size: 11px; font-weight: 500; color: var(--t2);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border-2); border-right: 1px solid var(--border);
+      white-space: nowrap; text-align: left;
+      cursor: pointer; user-select: none;
+    }
+    thead tr.cols th:hover { color: var(--t1); }
+    thead tr.cols th.sorted { color: var(--accent); }
+    thead tr.cols th.sorted::after { content: attr(data-dir); margin-left: 3px; font-size: 9px; }
+    thead tr.cols th.gs { border-left: 1px solid var(--border-2); }
+
+    /* Body */
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.06s; }
+    tbody tr:hover td { background: #f4f7ff !important; }
+
+    /* Invoice boundary */
+    tbody tr.inv-first td { border-top: 1px solid var(--border-2); }
+    tbody tr.inv-first:first-child td { border-top: none; }
+
+    td {
+      height: 34px; padding: 0 12px;
+      border-right: 1px solid var(--border);
+      vertical-align: middle; white-space: nowrap; color: var(--t1);
+      background: var(--white);
+    }
+    td:last-child { border-right: none; }
+    td.gs { border-left: 1px solid var(--border-2); }
+    td.span-cell { vertical-align: middle; border-bottom: 1px solid var(--border); background: inherit; }
+
+    /* Cell types */
+    .mn   { font-family: var(--mono); font-size: 11px; }
+    .t2   { color: var(--t2); }
+    .t3   { color: var(--t3); font-size: 11px; }
+    .lnk  { color: var(--accent); cursor: pointer; font-weight: 500; }
+    .lnk:hover { text-decoration: underline; }
+    .nr   { text-align: right; font-variant-numeric: tabular-nums; }
+    .bd   { font-weight: 600; }
+    .neg  { color: var(--red); font-weight: 500; }
+    .pos  { color: var(--green); font-weight: 500; }
+    .sku-name { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Badges */
+    .bg { display: inline-block; font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 3px; white-space: nowrap; }
+    .b-gr { background: var(--green-bg); color: var(--green); }
+    .b-re { background: var(--red-bg);   color: var(--red);   }
+    .b-am { background: var(--amber-bg); color: var(--amber); }
+    .b-bl { background: var(--accent-bg);color: var(--accent);}
+    .b-gy { background: #f2f3f6;         color: var(--t3);    }
+
+    /* Channel */
+    .ch { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.2px; }
+    .ch-mt { background: #eff3ff; color: #3451c7; }
+    .ch-qc { background: #edfaf2; color: #1e7a45; }
+    .ch-ec { background: #fff0f6; color: #b52b6e; }
+
+    /* Pager */
+    .pager {
+      background: var(--white); border-top: 1px solid var(--border);
+      height: 38px; display: flex; align-items: center; padding: 0 24px; gap: 4px; flex-shrink: 0;
+    }
+    .pi { font-size: 11px; color: var(--t3); margin-right: auto; }
+    .pb {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      height: 26px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: 4px;
+      cursor: pointer; background: var(--white); color: var(--t2); transition: all 0.1s;
+    }
+    .pb:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pb.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pb:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .emp td { color: var(--t3); text-align: center; padding: 48px; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="tb-brand">Finifi Hub</span>
+  <div class="tb-sep"></div>
+  <span class="tb-title">Invoice to Cash Tracker</span>
+  <div class="tb-acts">
+    <button class="tb-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="tb-btn primary" onclick="applyFilters()">Refresh</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="ctrl-bar">
+    <span class="c-lbl">Date</span>
+    <input type="date" class="c-in" id="dtFrom" value="2025-01-01">
+    <span class="c-lbl" style="color:var(--t3)">to</span>
+    <input type="date" class="c-in" id="dtTo" value="2025-03-31">
+    <div class="c-sep"></div>
+    <span class="c-lbl">Channel</span>
+    <select class="c-sel" id="selCh" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="MT">Modern Trade</option>
+      <option value="QC">Quick Commerce</option>
+      <option value="EC">Ecommerce</option>
+    </select>
+    <span class="c-lbl">Customer</span>
+    <select class="c-sel" id="selCust" onchange="applyFilters()">
+      <option value="">All Customers</option>
+    </select>
+    <span class="c-lbl">Status</span>
+    <select class="c-sel" id="selSt" onchange="applyFilters()">
+      <option value="">All Statuses</option>
+      <option value="Pending">Payment Pending</option>
+      <option value="Partial">Partially Paid</option>
+      <option value="Paid">Fully Paid</option>
+      <option value="Disputed">Disputed</option>
+    </select>
+    <div class="srch">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="srch-in" id="srch" type="text" placeholder="Search invoice, customer…" oninput="applyFilters()">
+    </div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi-item"><div class="kv a" id="k-inv">—</div><div class="kl">Total Invoices</div></div>
+    <div class="kpi-item"><div class="kv" id="k-sku">—</div><div class="kl">SKU Lines</div></div>
+    <div class="kpi-item"><div class="kv" id="k-val">—</div><div class="kl">Total Invoice Value</div></div>
+    <div class="kpi-item"><div class="kv g" id="k-paid">—</div><div class="kl">Payment Received</div></div>
+    <div class="kpi-item"><div class="kv r" id="k-pend">—</div><div class="kl">Payment Pending</div></div>
+    <div class="kpi-item"><div class="kv m" id="k-disc">—</div><div class="kl">Total Discrepancy</div></div>
+    <div class="kpi-item"><div class="kv r" id="k-dn">—</div><div class="kl">Debit Notes</div></div>
+    <div class="kpi-item"><div class="kv" id="k-pay-rate">—</div><div class="kl">Payment Rate</div></div>
+    <div class="kpi-item"><div class="kv" id="k-dso">—</div><div class="kl">Avg DSO (days)</div></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('main',this)">Invoice Tracker</button>
+    <button class="tab-btn" onclick="switchTab('debit',this)">Debit Notes</button>
+    <button class="tab-btn" onclick="switchTab('payment',this)">Payment Details</button>
+  </div>
+
+  <!-- INVOICE TRACKER -->
+  <div id="p-main" class="panel active">
+    <div class="t-wrap">
+      <table>
+        <thead>
+          <tr class="grp">
+            <th colspan="3">Customer Information</th>
+            <th colspan="6" class="gs">Invoice Details</th>
+            <th colspan="5" class="gs">Debit Note</th>
+            <th colspan="4" class="gs">Credit Note</th>
+            <th colspan="5" class="gs">Payment Advice</th>
+            <th colspan="4" class="gs">Payment Posted</th>
+          </tr>
+          <tr class="cols">
+            <!-- Customer -->
+            <th onclick="srt('customer',this)">Customer Name</th>
+            <th onclick="srt('channel',this)">Channel</th>
+            <th onclick="srt('articleNo',this)">Article No</th>
+            <!-- Invoice -->
+            <th class="gs" onclick="srt('invNo',this)">Invoice No</th>
+            <th onclick="srt('invDate',this)">Invoice Date</th>
+            <th class="nr" onclick="srt('invQty',this)">Qty</th>
+            <th class="nr">Price</th>
+            <th class="nr">GST%</th>
+            <th class="nr" onclick="srt('invValue',this)">Invoice Value</th>
+            <!-- Debit Note -->
+            <th class="gs" onclick="srt('debitNoteNo',this)">Debit Note No</th>
+            <th class="nr">Qty</th>
+            <th class="nr">Price</th>
+            <th class="nr">GST%</th>
+            <th class="nr" onclick="srt('debitValue',this)">DN Value</th>
+            <!-- Credit Note -->
+            <th class="gs">CN Type</th>
+            <th class="nr">Qty</th>
+            <th class="nr" onclick="srt('cnValue',this)">CN Value</th>
+            <th onclick="srt('cnRef',this)">Credit Note No</th>
+            <!-- Payment Advice -->
+            <th class="gs" onclick="srt('payDate',this)">Payment Date</th>
+            <th class="nr" onclick="srt('payAmount',this)">Amount</th>
+            <th>UTR No</th>
+            <th>Payment T No</th>
+            <th>Pay No</th>
+            <!-- Payment Posted -->
+            <th class="gs" onclick="srt('ppDate',this)">Posted Date</th>
+            <th class="nr" onclick="srt('ppAmount',this)">Amount</th>
+            <th>UTR No</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tb-main"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="pi" id="pg-info"></span>
+      <div id="pg-btns" style="display:flex;gap:4px;"></div>
+    </div>
+  </div>
+
+  <!-- DEBIT NOTES -->
+  <div id="p-debit" class="panel">
+    <div class="t-wrap">
+      <table>
+        <thead>
+          <tr class="grp">
+            <th colspan="4">Customer / SKU</th>
+            <th colspan="3" class="gs">Invoice</th>
+            <th colspan="5" class="gs">Debit Note Detail</th>
+            <th colspan="2" class="gs">Credit Note</th>
+          </tr>
+          <tr class="cols">
+            <th>Customer</th><th>Channel</th><th>Article No</th><th>SKU Description</th>
+            <th class="gs">Invoice No</th><th>Invoice Date</th><th class="nr">Invoice Value</th>
+            <th class="gs">Debit Note No</th><th>Date</th><th class="nr">Qty</th><th class="nr">Value</th><th>Reason</th>
+            <th class="gs">Status</th><th>Credit Note No</th>
+          </tr>
+        </thead>
+        <tbody id="tb-debit"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENT DETAILS -->
+  <div id="p-payment" class="panel">
+    <div class="t-wrap">
+      <table>
+        <thead>
+          <tr class="grp">
+            <th colspan="3">Customer</th>
+            <th colspan="3" class="gs">Invoice</th>
+            <th colspan="5" class="gs">Payment Advice</th>
+            <th colspan="4" class="gs">Credit Note</th>
+            <th colspan="4" class="gs">Payment Posted</th>
+          </tr>
+          <tr class="cols">
+            <th>Customer</th><th>Channel</th><th>Invoice No</th>
+            <th class="gs">Invoice Date</th><th class="nr">Invoice Value</th><th class="nr">Net Payable</th>
+            <th class="gs">Payment Date</th><th class="nr">Amount</th><th>UTR No</th><th>Payment T No</th><th>Pay No</th>
+            <th class="gs">Type</th><th class="nr">CN Value</th><th>Credit Note No</th><th>Status</th>
+            <th class="gs">Posted Date</th><th class="nr">Posted Amount</th><th>Posted UTR</th><th>Variance</th>
+          </tr>
+        </thead>
+        <tbody id="tb-payment"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  DATA MODEL — Invoice to Cash
+//  invoice → skuLines[]
+// ══════════════════════════════════════════════════════════
+
+const SKUS = {
+  RRL_A: { articleNo:'491264454', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  RRL_B: { articleNo:'491264455', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  RRL_C: { articleNo:'491264456', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  RRL_D: { articleNo:'491264457', skuName:'Ocean Fruit Water Mixed Berry 500ml PET' },
+  RRL_E: { articleNo:'491264458', skuName:'Ocean Fruit Water Green Apple 500ml PET' },
+  BLK_A: { articleNo:'BLK-10021', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  BLK_B: { articleNo:'BLK-10022', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  BLK_C: { articleNo:'BLK-10023', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  AMZ_A: { articleNo:'AMZ-B0CX1', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  AMZ_B: { articleNo:'AMZ-B0CX2', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  AMZ_C: { articleNo:'AMZ-B0CX3', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+  AMZ_D: { articleNo:'AMZ-B0CX4', skuName:'Ocean Fruit Water Mixed Berry 500ml PET' },
+  DMT_A: { articleNo:'DMT-30041', skuName:'Ocean Fruit Water Pink Guava 500ml PET' },
+  DMT_B: { articleNo:'DMT-30042', skuName:'Ocean Fruit Water Mango 500ml PET' },
+  DMT_C: { articleNo:'DMT-30043', skuName:'Ocean Fruit Water Lychee 500ml PET' },
+};
+
+const DATA = [
+  // Invoice 1 — Reliance (2 SKUs)
+  {
+    invNo:'INV-F-10001', invDate:'2025-01-07',
+    customer:'Reliance Retail Ltd', channel:'MT',
+    payDate:'2025-02-10', payAmount:127766, payUtrNo:'UTR-88001', paymentTNo:'PT-5001', payNo:'PAY-001',
+    ppDate:'2025-02-12', ppAmount:127766, ppUtrNo:'UTR-88001', ppRef:'PP-001',
+    skuLines: [
+      { ...SKUS.RRL_A, invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+        debitNoteNo:'DN-RRL-001', debitQty:2, debitPrice:66.00, debitGst:5, debitValue:138,
+        cnType:'Shortage', cnQty:2, cnValue:138, cnRef:'CN-F-001' },
+      { ...SKUS.RRL_B, invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' }
+    ]
+  },
+  // Invoice 2 — Reliance (3 SKUs)
+  {
+    invNo:'INV-F-10002', invDate:'2025-01-12',
+    customer:'Reliance Retail Ltd', channel:'MT',
+    payDate:'2025-02-20', payAmount:9934, payUtrNo:'UTR-88002', paymentTNo:'PT-5002', payNo:'PAY-002',
+    ppDate:'2025-02-22', ppAmount:9934, ppUtrNo:'UTR-88002', ppRef:'PP-002',
+    skuLines: [
+      { ...SKUS.RRL_C, invQty:48, invPrice:66.00, invGst:5, invValue:3326,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.RRL_D, invQty:24, invPrice:66.00, invGst:5, invValue:1663,
+        debitNoteNo:'DN-RRL-002', debitQty:2, debitPrice:66.00, debitGst:5, debitValue:138,
+        cnType:'Damage', cnQty:2, cnValue:138, cnRef:'' },
+      { ...SKUS.RRL_E, invQty:24, invPrice:66.00, invGst:5, invValue:1663,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' }
+    ]
+  },
+  // Invoice 3 — Blinkit (2 SKUs)
+  {
+    invNo:'INV-F-10003', invDate:'2025-01-09',
+    customer:'Blinkit (Zomato)', channel:'QC',
+    payDate:'2025-02-05', payAmount:56949, payUtrNo:'UTR-88003', paymentTNo:'PT-5003', payNo:'PAY-003',
+    ppDate:'2025-02-07', ppAmount:56949, ppUtrNo:'UTR-88003', ppRef:'PP-003',
+    skuLines: [
+      { ...SKUS.BLK_A, invQty:400, invPrice:85.00, invGst:12, invValue:38080,
+        debitNoteNo:'DN-BLK-001', debitQty:2, debitPrice:85.00, debitGst:12, debitValue:190,
+        cnType:'Shortage', cnQty:2, cnValue:190, cnRef:'CN-F-002' },
+      { ...SKUS.BLK_B, invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' }
+    ]
+  },
+  // Invoice 4 — Blinkit (3 SKUs)
+  {
+    invNo:'INV-F-10004', invDate:'2025-01-16',
+    customer:'Blinkit (Zomato)', channel:'QC',
+    payDate:'2025-02-18', payAmount:57120, payUtrNo:'UTR-88004', paymentTNo:'PT-5004', payNo:'PAY-004',
+    ppDate:'2025-02-20', ppAmount:57120, ppUtrNo:'UTR-88004', ppRef:'PP-004',
+    skuLines: [
+      { ...SKUS.BLK_A, invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.BLK_B, invQty:100, invPrice:85.00, invGst:12, invValue:9520,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.BLK_C, invQty:200, invPrice:85.00, invGst:12, invValue:19040,
+        debitNoteNo:'DN-BLK-002', debitQty:5, debitPrice:85.00, debitGst:12, debitValue:476,
+        cnType:'Shortage', cnQty:5, cnValue:476, cnRef:'' }
+    ]
+  },
+  // Invoice 5 — Amazon (4 SKUs)
+  {
+    invNo:'INV-F-10005', invDate:'2025-01-12',
+    customer:'Amazon Seller Central', channel:'EC',
+    payDate:'2025-03-01', payAmount:305216, payUtrNo:'UTR-88005', paymentTNo:'PT-5005', payNo:'PAY-005',
+    ppDate:'2025-03-03', ppAmount:305216, ppUtrNo:'UTR-88005', ppRef:'PP-005',
+    skuLines: [
+      { ...SKUS.AMZ_A, invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+        debitNoteNo:'DN-AMZ-001', debitQty:5, debitPrice:340.00, debitGst:18, debitValue:2006,
+        cnType:'Damage', cnQty:5, cnValue:2006, cnRef:'CN-F-003' },
+      { ...SKUS.AMZ_B, invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.AMZ_C, invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.AMZ_D, invQty:200, invPrice:340.00, invGst:18, invValue:80240,
+        debitNoteNo:'DN-AMZ-002', debitQty:5, debitPrice:340.00, debitGst:18, debitValue:2006,
+        cnType:'Shortage', cnQty:5, cnValue:2006, cnRef:'' }
+    ]
+  },
+  // Invoice 6 — DMart (2 SKUs)
+  {
+    invNo:'INV-F-10006', invDate:'2025-01-14',
+    customer:'DMart (Avenue Supermarts)', channel:'MT',
+    payDate:'2025-02-28', payAmount:100800, payUtrNo:'UTR-88006', paymentTNo:'PT-5006', payNo:'PAY-006',
+    ppDate:'2025-03-02', ppAmount:100800, ppUtrNo:'UTR-88006', ppRef:'PP-006',
+    skuLines: [
+      { ...SKUS.DMT_A, invQty:300, invPrice:180.00, invGst:12, invValue:60480,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' },
+      { ...SKUS.DMT_B, invQty:200, invPrice:180.00, invGst:12, invValue:40320,
+        debitNoteNo:'', debitQty:0, debitPrice:0, debitGst:0, debitValue:0,
+        cnType:'', cnQty:0, cnValue:0, cnRef:'' }
+    ]
+  },
+  // Invoice 7 — DMart (1 SKU, pending payment)
+  {
+    invNo:'INV-F-10007', invDate:'2025-01-21',
+    customer:'DMart (Avenue Supermarts)', channel:'MT',
+    payDate:'', payAmount:0, payUtrNo:'', paymentTNo:'', payNo:'',
+    ppDate:'', ppAmount:0, ppUtrNo:'', ppRef:'',
+    skuLines: [
+      { ...SKUS.DMT_C, invQty:500, invPrice:180.00, invGst:12, invValue:100800,
+        debitNoteNo:'DN-DMT-001', debitQty:8, debitPrice:180.00, debitGst:12, debitValue:1613,
+        cnType:'Shortage', cnQty:8, cnValue:1613, cnRef:'' }
+    ]
+  }
+];
+
+// ── HELPERS ──
+const inr = v => v ? '₹' + Number(v).toLocaleString('en-IN') : '—';
+const qty = v => (v || v===0) ? Number(v).toLocaleString('en-IN') : '—';
+const dt  = d => d ? d.slice(8)+'/'+d.slice(5,7)+'/'+d.slice(2,4) : '—';
+const pct = v => v ? v+'%' : '—';
+const _   = v => v || '—';
+
+function chan(ch) {
+  return {MT:'<span class="ch ch-mt">MT</span>',QC:'<span class="ch ch-qc">QC</span>',EC:'<span class="ch ch-ec">EC</span>'}[ch]||ch;
+}
+
+function status(inv) {
+  const totalInv = inv.skuLines.reduce((s,sk)=>s+(sk.invValue||0), 0);
+  const totalDN = inv.skuLines.reduce((s,sk)=>s+(sk.debitValue||0), 0);
+  if (inv.ppDate) return '<span class="bg b-gr">Paid</span>';
+  if (inv.payDate) return '<span class="bg b-bl">Advice Received</span>';
+  if (totalDN > 0) return '<span class="bg b-re">Disputed</span>';
+  return '<span class="bg b-am">Pending</span>';
+}
+
+// ── KPIs ──
+function calcKPI(data) {
+  let skuLines=0, totalInv=0, paid=0, pend=0, disc=0, dnCount=0, dsoSum=0, dsoCount=0;
+  data.forEach(inv => {
+    const invVal = inv.skuLines.reduce((s,sk)=>s+(sk.invValue||0), 0);
+    const dnVal = inv.skuLines.reduce((s,sk)=>s+(sk.debitValue||0), 0);
+    skuLines += inv.skuLines.length;
+    totalInv += invVal;
+    disc += dnVal;
+    if (dnVal > 0) dnCount++;
+    if (inv.ppAmount) paid += inv.ppAmount;
+    else if (invVal > 0) pend += invVal;
+    if (inv.ppDate && inv.invDate) {
+      const days = Math.round((new Date(inv.ppDate) - new Date(inv.invDate)) / 86400000);
+      dsoSum += days; dsoCount++;
+    }
+  });
+  const payRate = totalInv > 0 ? Math.round((paid / totalInv) * 100) : 0;
+  document.getElementById('k-inv').textContent = data.length;
+  document.getElementById('k-sku').textContent = skuLines;
+  document.getElementById('k-val').textContent = inr(totalInv);
+  document.getElementById('k-paid').textContent = inr(paid);
+  document.getElementById('k-pend').textContent = inr(pend);
+  document.getElementById('k-disc').textContent = inr(disc);
+  document.getElementById('k-dn').textContent = dnCount;
+  document.getElementById('k-pay-rate').textContent = payRate + '%';
+  document.getElementById('k-dso').textContent = dsoCount ? Math.round(dsoSum / dsoCount) : '—';
+}
+
+// ── RENDER MAIN TABLE ──
+function renderMain(data) {
+  const tbody = document.getElementById('tb-main');
+  let h = '';
+  data.forEach((inv, invIdx) => {
+    const skuCount = inv.skuLines.length;
+    inv.skuLines.forEach((sku, skuIdx) => {
+      const isFirst = skuIdx === 0;
+      const rowClass = invIdx > 0 && isFirst ? 'inv-first' : '';
+      h += `<tr class="${rowClass}">`;
+      if (isFirst) {
+        h += `<td class="bd span-cell" rowspan="${skuCount}">${inv.customer}</td>`;
+        h += `<td class="span-cell" rowspan="${skuCount}">${chan(inv.channel)}</td>`;
+      }
+      h += `<td class="mn t3">${sku.articleNo}</td>`;
+      if (isFirst) {
+        h += `<td class="mn lnk gs span-cell" rowspan="${skuCount}">${inv.invNo}</td>`;
+        h += `<td class="t2 span-cell" rowspan="${skuCount}">${dt(inv.invDate)}</td>`;
+      }
+      h += `<td class="nr">${qty(sku.invQty)}</td>`;
+      h += `<td class="nr t2">${inr(sku.invPrice)}</td>`;
+      h += `<td class="nr t3">${pct(sku.invGst)}</td>`;
+      h += `<td class="nr bd">${inr(sku.invValue)}</td>`;
+      h += `<td class="mn gs ${sku.debitNoteNo?'lnk':''}">${_(sku.debitNoteNo)}</td>`;
+      h += `<td class="nr">${sku.debitQty?qty(sku.debitQty):'—'}</td>`;
+      h += `<td class="nr">${inr(sku.debitPrice)}</td>`;
+      h += `<td class="nr t3">${pct(sku.debitGst)}</td>`;
+      h += `<td class="nr">${inr(sku.debitValue)}</td>`;
+      h += `<td class="gs">${sku.cnType?`<span class="bg b-am">${sku.cnType}</span>`:'—'}</td>`;
+      h += `<td class="nr">${sku.cnQty?qty(sku.cnQty):'—'}</td>`;
+      h += `<td class="nr">${inr(sku.cnValue)}</td>`;
+      h += `<td class="mn lnk">${_(sku.cnRef)}</td>`;
+      if (isFirst) {
+        h += `<td class="t2 gs span-cell" rowspan="${skuCount}">${dt(inv.payDate)}</td>`;
+        h += `<td class="nr bd span-cell" rowspan="${skuCount}">${inr(inv.payAmount)}</td>`;
+        h += `<td class="mn t3 span-cell" rowspan="${skuCount}">${_(inv.payUtrNo)}</td>`;
+        h += `<td class="mn t3 span-cell" rowspan="${skuCount}">${_(inv.paymentTNo)}</td>`;
+        h += `<td class="mn t3 span-cell" rowspan="${skuCount}">${_(inv.payNo)}</td>`;
+        h += `<td class="t2 gs span-cell" rowspan="${skuCount}">${dt(inv.ppDate)}</td>`;
+        h += `<td class="nr bd span-cell ${inv.ppAmount?'pos':''}" rowspan="${skuCount}">${inr(inv.ppAmount)}</td>`;
+        h += `<td class="mn t3 span-cell" rowspan="${skuCount}">${_(inv.ppUtrNo)}</td>`;
+        h += `<td class="span-cell" rowspan="${skuCount}">${status(inv)}</td>`;
+      }
+      h += `</tr>`;
+    });
+  });
+  tbody.innerHTML = h || '<tr class="emp"><td colspan="27">No invoices match your filters.</td></tr>';
+}
+
+// ── DEBIT TABLE ──
+function renderDebit(data) {
+  let h = '';
+  data.forEach(inv => {
+    inv.skuLines.forEach(sku => {
+      if (!sku.debitNoteNo) return;
+      h += `<tr>
+        <td class="bd">${inv.customer}</td>
+        <td>${chan(inv.channel)}</td>
+        <td class="mn t3">${sku.articleNo}</td>
+        <td class="sku-name" title="${sku.skuName}">${sku.skuName}</td>
+        <td class="mn lnk gs">${inv.invNo}</td>
+        <td class="t2">${dt(inv.invDate)}</td>
+        <td class="nr bd">${inr(sku.invValue)}</td>
+        <td class="mn lnk gs">${sku.debitNoteNo}</td>
+        <td class="t2">${dt(inv.invDate)}</td>
+        <td class="nr">${qty(sku.debitQty)}</td>
+        <td class="nr bd">${inr(sku.debitValue)}</td>
+        <td>${sku.cnType?`<span class="bg b-am">${sku.cnType}</span>`:'—'}</td>
+        <td class="gs">${sku.cnRef?'<span class="bg b-gr">CN Raised</span>':'<span class="bg b-re">Pending</span>'}</td>
+        <td class="mn lnk">${_(sku.cnRef)}</td>
+      </tr>`;
+    });
+  });
+  document.getElementById('tb-debit').innerHTML = h || '<tr class="emp"><td colspan="14">No debit notes.</td></tr>';
+}
+
+// ── PAYMENT TABLE ──
+function renderPayment(data) {
+  let h = '';
+  data.forEach(inv => {
+    const totalInv = inv.skuLines.reduce((s,sk)=>s+(sk.invValue||0), 0);
+    const totalDN = inv.skuLines.reduce((s,sk)=>s+(sk.debitValue||0), 0);
+    const netPayable = totalInv - totalDN;
+    const variance = inv.ppAmount ? (inv.ppAmount - netPayable) : 0;
+    h += `<tr>
+      <td class="bd">${inv.customer}</td>
+      <td>${chan(inv.channel)}</td>
+      <td class="mn lnk">${inv.invNo}</td>
+      <td class="t2 gs">${dt(inv.invDate)}</td>
+      <td class="nr bd">${inr(totalInv)}</td>
+      <td class="nr">${inr(netPayable)}</td>
+      <td class="t2 gs">${dt(inv.payDate)}</td>
+      <td class="nr bd">${inr(inv.payAmount)}</td>
+      <td class="mn t3">${_(inv.payUtrNo)}</td>
+      <td class="mn t3">${_(inv.paymentTNo)}</td>
+      <td class="mn t3">${_(inv.payNo)}</td>
+      <td class="gs">${totalDN>0?`<span class="bg b-am">DN Applied</span>`:'—'}</td>
+      <td class="nr">${totalDN>0?inr(totalDN):'—'}</td>
+      <td class="mn lnk">${inv.skuLines.find(s=>s.cnRef)?.cnRef||'—'}</td>
+      <td>${totalDN>0?'<span class="bg b-am">Adjusted</span>':'—'}</td>
+      <td class="t2 gs">${dt(inv.ppDate)}</td>
+      <td class="nr bd ${inv.ppAmount?'pos':''}">${inr(inv.ppAmount)}</td>
+      <td class="mn t3">${_(inv.ppUtrNo)}</td>
+      <td class="nr ${variance<0?'neg':variance>0?'pos':'t3'}">${variance?inr(Math.abs(variance)):'—'}</td>
+    </tr>`;
+  });
+  document.getElementById('tb-payment').innerHTML = h || '<tr class="emp"><td colspan="19">No payment records.</td></tr>';
+}
+
+// ── FILTERS ──
+let filtered = [...DATA];
+function applyFilters() {
+  const ch   = document.getElementById('selCh').value;
+  const cust = document.getElementById('selCust').value;
+  const st   = document.getElementById('selSt').value;
+  const q    = document.getElementById('srch').value.toLowerCase();
+
+  filtered = DATA.filter(inv => {
+    if (ch && inv.channel !== ch) return false;
+    if (cust && inv.customer !== cust) return false;
+    if (q) {
+      const hit = inv.customer.toLowerCase().includes(q) ||
+                  inv.invNo.toLowerCase().includes(q) ||
+                  inv.skuLines.some(s => s.skuName.toLowerCase().includes(q) || s.articleNo.toLowerCase().includes(q));
+      if (!hit) return false;
+    }
+    if (st) {
+      const totalInv = inv.skuLines.reduce((s,sk)=>s+(sk.invValue||0), 0);
+      const totalDN = inv.skuLines.reduce((s,sk)=>s+(sk.debitValue||0), 0);
+      if (st==='Paid' && !inv.ppDate) return false;
+      if (st==='Pending' && inv.ppDate) return false;
+      if (st==='Partial' && (!inv.payDate || inv.ppDate)) return false;
+      if (st==='Disputed' && totalDN === 0) return false;
+    }
+    return true;
+  });
+  renderMain(filtered);
+  renderDebit(filtered);
+  renderPayment(filtered);
+  calcKPI(filtered);
+}
+
+// ── CUSTOMER DROPDOWN ──
+function populateCustDropdown() {
+  const sel = document.getElementById('selCust');
+  const customers = [...new Set(DATA.map(inv => inv.customer))].sort();
+  customers.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+// ── SORT ──
+let sortKey = null, sortDir = 1;
+function srt(key, th) {
+  if (sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  document.querySelectorAll('thead tr.cols th').forEach(t => { t.classList.remove('sorted'); delete t.dataset.dir; });
+  th.classList.add('sorted'); th.dataset.dir = sortDir===1?'↑':'↓';
+  applyFilters();
+}
+
+// ── TABS ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('p-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const rows = [['Customer','Channel','Article No','Invoice No','Invoice Date','Inv Qty','Inv Value',
+    'Debit Note No','DN Qty','DN Value','CN Type','CN Value','CN Ref',
+    'Pay Date','Pay Amount','UTR No','Posted Date','Posted Amount']];
+  DATA.forEach(inv => inv.skuLines.forEach(s => rows.push([
+    inv.customer, inv.channel, s.articleNo, inv.invNo, inv.invDate, s.invQty, s.invValue,
+    s.debitNoteNo, s.debitQty, s.debitValue, s.cnType, s.cnValue, s.cnRef,
+    inv.payDate, inv.payAmount, inv.payUtrNo, inv.ppDate, inv.ppAmount
+  ])));
+  const csv = rows.map(r => r.map(v => `"${v??''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'invoice-to-cash-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── INIT ──
+populateCustDropdown();
+applyFilters();
+</script>
+</body>
+</html>
