@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice to Cash Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #1a1a1a;
+            font-size: 14px;
+            padding-top: 70px;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .hub-title {
+            color: #000;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-buttons button {
+            padding: 8px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .header-buttons button:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .controls {
+            background: white;
+            padding: 16px 32px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .controls-left {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-filter input, .date-filter select {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 8px 16px 8px 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            width: 300px;
+        }
+        
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .summary-stats {
+            background: white;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 24px;
+        }
+        
+        .stat-card {
+            text-align: left;
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card .label {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .stat-card .sublabel {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .table-section {
+            background: white;
+            padding: 0 32px 32px 32px;
+        }
+        
+        .table-container {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            min-width: 80px;
+            display: inline-block;
+        }
+        
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-overdue { background: #f8d7da; color: #721c24; }
+        .status-dispute { background: #ffeaa7; color: #8b6914; }
+        .status-partial { background: #e0cffc; color: #5b21b6; }
+        .status-reconciled { background: #b8e7d4; color: #0d5c3e; }
+        .status-unreconciled { background: #ffd6cc; color: #7d2e0f; }
+        
+        .account-name {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .invoice-number {
+            font-family: 'Courier New', monospace;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clickable:hover {
+            color: #007bff;
+            text-decoration: underline;
+        }
+        
+        .metric-number {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .expandable-row {
+            display: none;
+            background: #f8f9fa;
+        }
+
+        .expandable-row.expanded {
+            display: table-row;
+        }
+
+        .expandable-content {
+            padding: 20px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .detail-card h4 {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .detail-card .value {
+            font-size: 16px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .sub-table {
+            margin-top: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .sub-table table {
+            margin: 0;
+        }
+
+        .sub-table th {
+            background: #ffffff;
+            font-size: 12px;
+        }
+
+        .sub-table td {
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .currency {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .tab-container {
+            background: white;
+            padding: 0 32px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab {
+            padding: 16px 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #495057;
+        }
+
+        .tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dispute-reason {
+            font-size: 12px;
+            color: #dc3545;
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .payment-timeline {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .timeline-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-label {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .timeline-value {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .aging-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .aging-current { background: #d4edda; color: #155724; }
+        .aging-30 { background: #fff3cd; color: #856404; }
+        .aging-60 { background: #ffe5cc; color: #8b4513; }
+        .aging-90 { background: #f8d7da; color: #721c24; }
+
+        @media (max-width: 1200px) {
+            .summary-stats {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="hub-title">Invoice to Cash Dashboard</span>
+        </div>
+        <div class="header-buttons">
+            <button onclick="window.location.reload()">Refresh</button>
+            <button onclick="exportToCSV()">Export CSV</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <div class="controls-left">
+                <div class="date-filter">
+                    <span style="color: #6c757d; font-weight: 500;">Invoice Date:</span>
+                    <input type="date" id="startDate" value="2025-01-01">
+                    <span style="color: #6c757d;">to</span>
+                    <input type="date" id="endDate" value="2025-02-15">
+                </div>
+                <div class="date-filter">
+                    <select id="accountFilter" onchange="filterData()">
+                        <option value="">All Accounts</option>
+                        <option value="Blinkit">Blinkit</option>
+                        <option value="BigBasket">BigBasket</option>
+                        <option value="DMart">DMart</option>
+                        <option value="Zepto">Zepto</option>
+                        <option value="Swiggy Instamart">Swiggy Instamart</option>
+                        <option value="Walmart">Walmart</option>
+                        <option value="Metro Cash & Carry">Metro Cash & Carry</option>
+                        <option value="Reliance Fresh">Reliance Fresh</option>
+                    </select>
+                </div>
+                <div class="date-filter">
+                    <select id="statusFilter" onchange="filterData()">
+                        <option value="">All Payment Status</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Partial">Partial Payment</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Overdue">Overdue</option>
+                        <option value="Disputed">Disputed</option>
+                    </select>
+                </div>
+                <div class="date-filter">
+                    <select id="reconFilter" onchange="filterData()">
+                        <option value="">Reconciliation Status</option>
+                        <option value="Reconciled">Reconciled</option>
+                        <option value="Unreconciled">Unreconciled</option>
+                        <option value="Partial">Partial Recon</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by Invoice, Account, PO...">
+            </div>
+        </div>
+
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="number" id="totalInvoices">0</div>
+                <div class="label">Total Invoices</div>
+                <div class="sublabel">All time</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalInvoiceValue">₹0</div>
+                <div class="label">Total Invoice Value</div>
+                <div class="sublabel">Billed amount</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalReceived">₹0</div>
+                <div class="label">Payment Received</div>
+                <div class="sublabel">Collected amount</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalOutstanding">₹0</div>
+                <div class="label">Outstanding Amount</div>
+                <div class="sublabel">Pending collection</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="collectionRate">0%</div>
+                <div class="label">Collection Rate</div>
+                <div class="sublabel">Payment efficiency</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="avgDSO">0</div>
+                <div class="label">Average DSO</div>
+                <div class="sublabel">Days sales outstanding</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="reconRate">0%</div>
+                <div class="label">Reconciliation Rate</div>
+                <div class="sublabel">Matched payments</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="disputeCount">0</div>
+                <div class="label">Active Disputes</div>
+                <div class="sublabel">Requiring resolution</div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('invoices')">Invoice Overview</div>
+                <div class="tab" onclick="switchTab('payments')">Payment Tracking</div>
+                <div class="tab" onclick="switchTab('reconciliation')">Reconciliation</div>
+                <div class="tab" onclick="switchTab('disputes')">Disputes</div>
+                <div class="tab" onclick="switchTab('aging')">Aging Analysis</div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <!-- Invoice Overview Tab -->
+            <div id="invoices-tab" class="tab-content active">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Invoice #</th>
+                                <th>PO Reference</th>
+                                <th>Account</th>
+                                <th>Invoice Date</th>
+                                <th>Invoice Amount</th>
+                                <th>Received Amount</th>
+                                <th>Outstanding</th>
+                                <th>Payment Status</th>
+                                <th>Due Date</th>
+                                <th>Days Outstanding</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Tracking Tab -->
+            <div id="payments-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Invoice #</th>
+                                <th>Account</th>
+                                <th>Invoice Amount</th>
+                                <th>Payment Count</th>
+                                <th>Total Received</th>
+                                <th>Last Payment Date</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reconciliation Tab -->
+            <div id="reconciliation-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Account</th>
+                                <th>Invoice Amount</th>
+                                <th>Bank Statement Amount</th>
+                                <th>Variance</th>
+                                <th>Recon Status</th>
+                                <th>Recon Date</th>
+                                <th>Reference #</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reconciliationTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Disputes Tab -->
+            <div id="disputes-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Account</th>
+                                <th>Invoice Amount</th>
+                                <th>Dispute Amount</th>
+                                <th>Dispute Reason</th>
+                                <th>Raised Date</th>
+                                <th>Age (Days)</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disputesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aging Analysis Tab -->
+            <div id="aging-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Total Outstanding</th>
+                                <th>Current (0-30)</th>
+                                <th>31-60 Days</th>
+                                <th>61-90 Days</th>
+                                <th>90+ Days</th>
+                                <th>Oldest Invoice</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agingTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Invoice to Cash data
+        const invoiceData = [
+            {
+                invoiceNumber: "INV-2025-0001",
+                poReference: "PO-2025-0001",
+                accountName: "Blinkit",
+                invoiceDate: "2025-01-16",
+                dueDate: "2025-01-31",
+                invoiceAmount: 1225000,
+                payments: [
+                    { date: "2025-01-28", amount: 1225000, method: "NEFT", referenceNumber: "NEFT252801234", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-01-29",
+                bankStatementAmount: 1225000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0002",
+                poReference: "PO-2025-0001",
+                accountName: "Blinkit",
+                invoiceDate: "2025-01-17",
+                dueDate: "2025-02-01",
+                invoiceAmount: 1225000,
+                payments: [
+                    { date: "2025-01-28", amount: 1225000, method: "RTGS", referenceNumber: "RTGS252801567", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-01-29",
+                bankStatementAmount: 1225000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0003",
+                poReference: "PO-2025-0002",
+                accountName: "BigBasket",
+                invoiceDate: "2025-01-17",
+                dueDate: "2025-02-06",
+                invoiceAmount: 1100000,
+                payments: [
+                    { date: "2025-02-05", amount: 1100000, method: "NEFT", referenceNumber: "NEFT250502341", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-06",
+                bankStatementAmount: 1100000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0004",
+                poReference: "PO-2025-0002",
+                accountName: "BigBasket",
+                invoiceDate: "2025-01-18",
+                dueDate: "2025-02-07",
+                invoiceAmount: 1050000,
+                payments: [],
+                paymentStatus: "Disputed",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: [
+                    {
+                        amount: 1050000,
+                        reason: "Tax withhold - TDS mismatch (10% TDS not reflected)",
+                        raisedDate: "2025-01-25",
+                        age: 21,
+                        status: "Under Review",
+                        actionRequired: "Submit Form 16A and TDS certificate"
+                    }
+                ]
+            },
+            {
+                invoiceNumber: "INV-2025-0005",
+                poReference: "PO-2025-0002",
+                accountName: "BigBasket",
+                invoiceDate: "2025-01-18",
+                dueDate: "2025-02-07",
+                invoiceAmount: 1050000,
+                payments: [
+                    { date: "2025-02-05", amount: 1050000, method: "RTGS", referenceNumber: "RTGS250502789", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-06",
+                bankStatementAmount: 1050000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0006",
+                poReference: "PO-2025-0003",
+                accountName: "DMart",
+                invoiceDate: "2025-01-19",
+                dueDate: "2025-02-18",
+                invoiceAmount: 1400000,
+                payments: [
+                    { date: "2025-02-08", amount: 1400000, method: "NEFT", referenceNumber: "NEFT250803456", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-09",
+                bankStatementAmount: 1400000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0007",
+                poReference: "PO-2025-0003",
+                accountName: "DMart",
+                invoiceDate: "2025-01-20",
+                dueDate: "2025-02-19",
+                invoiceAmount: 1400000,
+                payments: [
+                    { date: "2025-02-08", amount: 1400000, method: "RTGS", referenceNumber: "RTGS250804567", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-09",
+                bankStatementAmount: 1400000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0008",
+                poReference: "PO-2025-0003",
+                accountName: "DMart",
+                invoiceDate: "2025-01-21",
+                dueDate: "2025-02-20",
+                invoiceAmount: 1400000,
+                payments: [],
+                paymentStatus: "Disputed",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: [
+                    {
+                        amount: 1400000,
+                        reason: "Deductions not matching - Short delivery claimed (100 units shortage)",
+                        raisedDate: "2025-01-28",
+                        age: 18,
+                        status: "Under Review",
+                        actionRequired: "Provide POD and delivery challan"
+                    }
+                ]
+            },
+            {
+                invoiceNumber: "INV-2025-0009",
+                poReference: "PO-2025-0003",
+                accountName: "DMart",
+                invoiceDate: "2025-01-21",
+                dueDate: "2025-02-20",
+                invoiceAmount: 1400000,
+                payments: [
+                    { date: "2025-02-08", amount: 1400000, method: "NEFT", referenceNumber: "NEFT250805678", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-09",
+                bankStatementAmount: 1400000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0010",
+                poReference: "PO-2025-0004",
+                accountName: "Zepto",
+                invoiceDate: "2025-01-21",
+                dueDate: "2025-01-31",
+                invoiceAmount: 1800000,
+                payments: [
+                    { date: "2025-01-30", amount: 1800000, method: "RTGS", referenceNumber: "RTGS253006789", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-01-31",
+                bankStatementAmount: 1800000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0011",
+                poReference: "PO-2025-0005",
+                accountName: "Swiggy Instamart",
+                invoiceDate: "2025-01-23",
+                dueDate: "2025-02-07",
+                invoiceAmount: 1050000,
+                payments: [
+                    { date: "2025-02-02", amount: 1050000, method: "NEFT", referenceNumber: "NEFT250207890", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-03",
+                bankStatementAmount: 1050000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0012",
+                poReference: "PO-2025-0005",
+                accountName: "Swiggy Instamart",
+                invoiceDate: "2025-01-24",
+                dueDate: "2025-02-08",
+                invoiceAmount: 1050000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0013",
+                poReference: "PO-2025-0006",
+                accountName: "Walmart",
+                invoiceDate: "2025-01-25",
+                dueDate: "2025-02-14",
+                invoiceAmount: 1600000,
+                payments: [
+                    { date: "2025-02-10", amount: 1600000, method: "RTGS", referenceNumber: "RTGS251008901", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-11",
+                bankStatementAmount: 1600000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0014",
+                poReference: "PO-2025-0006",
+                accountName: "Walmart",
+                invoiceDate: "2025-01-26",
+                dueDate: "2025-02-15",
+                invoiceAmount: 1600000,
+                payments: [
+                    { date: "2025-02-10", amount: 1600000, method: "NEFT", referenceNumber: "NEFT251009012", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-11",
+                bankStatementAmount: 1600000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0015",
+                poReference: "PO-2025-0006",
+                accountName: "Walmart",
+                invoiceDate: "2025-01-27",
+                dueDate: "2025-02-16",
+                invoiceAmount: 1600000,
+                payments: [],
+                paymentStatus: "Disputed",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: [
+                    {
+                        amount: 1600000,
+                        reason: "Price mismatch - Promotional discount 15% not applied as per agreement",
+                        raisedDate: "2025-02-03",
+                        age: 12,
+                        status: "Under Review",
+                        actionRequired: "Submit promotional agreement and revised invoice"
+                    }
+                ]
+            },
+            {
+                invoiceNumber: "INV-2025-0016",
+                poReference: "PO-2025-0007",
+                accountName: "Reliance Fresh",
+                invoiceDate: "2025-01-27",
+                dueDate: "2025-02-26",
+                invoiceAmount: 1750000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0017",
+                poReference: "PO-2025-0007",
+                accountName: "Reliance Fresh",
+                invoiceDate: "2025-01-28",
+                dueDate: "2025-02-27",
+                invoiceAmount: 1750000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0018",
+                poReference: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                invoiceDate: "2025-01-29",
+                dueDate: "2025-02-28",
+                invoiceAmount: 1050000,
+                payments: [],
+                paymentStatus: "Disputed",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: [
+                    {
+                        amount: 1050000,
+                        reason: "Quality issue - 50 units damaged during transit, credit note requested",
+                        raisedDate: "2025-02-05",
+                        age: 10,
+                        status: "Under Investigation",
+                        actionRequired: "Inspect returned goods and issue credit note"
+                    }
+                ]
+            },
+            {
+                invoiceNumber: "INV-2025-0019",
+                poReference: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                invoiceDate: "2025-01-30",
+                dueDate: "2025-03-01",
+                invoiceAmount: 1050000,
+                payments: [
+                    { date: "2025-02-12", amount: 1050000, method: "NEFT", referenceNumber: "NEFT251210123", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-13",
+                bankStatementAmount: 1050000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0020",
+                poReference: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                invoiceDate: "2025-01-31",
+                dueDate: "2025-03-02",
+                invoiceAmount: 1050000,
+                payments: [
+                    { date: "2025-02-12", amount: 1050000, method: "RTGS", referenceNumber: "RTGS251211234", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-13",
+                bankStatementAmount: 1050000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0021",
+                poReference: "PO-2025-0008",
+                accountName: "Metro Cash & Carry",
+                invoiceDate: "2025-02-01",
+                dueDate: "2025-03-03",
+                invoiceAmount: 1050000,
+                payments: [
+                    { date: "2025-02-12", amount: 1050000, method: "NEFT", referenceNumber: "NEFT251212345", status: "Cleared" }
+                ],
+                paymentStatus: "Paid",
+                reconStatus: "Reconciled",
+                reconDate: "2025-02-13",
+                bankStatementAmount: 1050000,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0022",
+                poReference: "PO-2025-0009",
+                accountName: "Spencer's",
+                invoiceDate: "2025-01-31",
+                dueDate: "2025-03-02",
+                invoiceAmount: 1450000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0023",
+                poReference: "PO-2025-0009",
+                accountName: "Spencer's",
+                invoiceDate: "2025-02-01",
+                dueDate: "2025-03-03",
+                invoiceAmount: 1450000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0024",
+                poReference: "PO-2025-0010",
+                accountName: "Blinkit",
+                invoiceDate: "2025-02-02",
+                dueDate: "2025-02-17",
+                invoiceAmount: 1400000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            },
+            {
+                invoiceNumber: "INV-2025-0025",
+                poReference: "PO-2025-0010",
+                accountName: "Blinkit",
+                invoiceDate: "2025-02-03",
+                dueDate: "2025-02-18",
+                invoiceAmount: 1400000,
+                payments: [],
+                paymentStatus: "Pending",
+                reconStatus: "Unreconciled",
+                reconDate: null,
+                bankStatementAmount: 0,
+                disputes: []
+            }
+        ];
+
+        let filteredData = [...invoiceData];
+
+        function formatCurrency(amount) {
+            return '₹' + (amount / 100000).toFixed(2) + 'L';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function getDaysOutstanding(invoiceDate, paymentDate = null) {
+            const start = new Date(invoiceDate);
+            const end = paymentDate ? new Date(paymentDate) : new Date();
+            const diff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+            return diff;
+        }
+
+        function getAgingBadge(days) {
+            if (days <= 30) return '<span class="aging-badge aging-current">0-30 Days</span>';
+            if (days <= 60) return '<span class="aging-badge aging-30">31-60 Days</span>';
+            if (days <= 90) return '<span class="aging-badge aging-60">61-90 Days</span>';
+            return '<span class="aging-badge aging-90">90+ Days</span>';
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'Paid': 'status-paid',
+                'Pending': 'status-pending',
+                'Overdue': 'status-overdue',
+                'Disputed': 'status-dispute',
+                'Partial': 'status-partial',
+                'Reconciled': 'status-reconciled',
+                'Unreconciled': 'status-unreconciled'
+            };
+            return `<span class="status-badge ${statusMap[status] || 'status-pending'}">${status}</span>`;
+        }
+
+        function calculateOutstanding(invoice) {
+            const received = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+            return invoice.invoiceAmount - received;
+        }
+
+        function isOverdue(dueDate, paymentStatus) {
+            if (paymentStatus === 'Paid') return false;
+            const today = new Date();
+            const due = new Date(dueDate);
+            return today > due;
+        }
+
+        function populateInvoicesTable(data = filteredData) {
+            const tbody = document.getElementById('invoicesTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach((invoice, index) => {
+                const outstanding = calculateOutstanding(invoice);
+                const received = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+                const daysOut = getDaysOutstanding(invoice.invoiceDate, invoice.payments[0]?.date);
+                const overdue = isOverdue(invoice.dueDate, invoice.paymentStatus);
+                const displayStatus = overdue && invoice.paymentStatus === 'Pending' ? 'Overdue' : invoice.paymentStatus;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="expand-icon" id="expand-inv-${index}">▶</span></td>
+                    <td class="invoice-number clickable">${invoice.invoiceNumber}</td>
+                    <td style="font-family: monospace;">${invoice.poReference}</td>
+                    <td class="account-name">${invoice.accountName}</td>
+                    <td>${formatDate(invoice.invoiceDate)}</td>
+                    <td class="amount">${formatCurrency(invoice.invoiceAmount)}</td>
+                    <td class="amount" style="color: #28a745;">${formatCurrency(received)}</td>
+                    <td class="amount" style="color: ${outstanding > 0 ? '#dc3545' : '#28a745'};">${formatCurrency(outstanding)}</td>
+                    <td>${getStatusBadge(displayStatus)}</td>
+                    <td>${formatDate(invoice.dueDate)}</td>
+                    <td class="metric-number">${daysOut} days ${getAgingBadge(daysOut)}</td>
+                `;
+                tr.onclick = () => toggleExpandInvoice(index);
+                tbody.appendChild(tr);
+
+                // Expandable row
+                const expandTr = document.createElement('tr');
+                expandTr.className = 'expandable-row';
+                expandTr.id = `expandable-inv-${index}`;
+                expandTr.innerHTML = `
+                    <td colspan="11">
+                        <div class="expandable-content">
+                            ${generateInvoiceDetails(invoice)}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(expandTr);
+            });
+        }
+
+        function generateInvoiceDetails(invoice) {
+            const outstanding = calculateOutstanding(invoice);
+            const received = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+            const paymentTable = generatePaymentTable(invoice.payments);
+            const disputeInfo = invoice.disputes.length > 0 ? generateDisputeInfo(invoice.disputes[0]) : '';
+
+            return `
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <h4>Invoice Amount</h4>
+                        <div class="value">${formatCurrency(invoice.invoiceAmount)}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Total billed</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Received</h4>
+                        <div class="value" style="color: #28a745;">${formatCurrency(received)}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">${invoice.payments.length} payment(s)</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Outstanding</h4>
+                        <div class="value" style="color: ${outstanding > 0 ? '#dc3545' : '#28a745'};">${formatCurrency(outstanding)}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">Pending collection</div>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Reconciliation</h4>
+                        <div class="value">${invoice.reconStatus}</div>
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">${invoice.reconDate ? formatDate(invoice.reconDate) : 'Not reconciled'}</div>
+                    </div>
+                </div>
+
+                <div class="payment-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-label">Invoice Date</div>
+                        <div class="timeline-value">${formatDate(invoice.invoiceDate)}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-label">Due Date</div>
+                        <div class="timeline-value">${formatDate(invoice.dueDate)}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-label">Payment Date</div>
+                        <div class="timeline-value">${invoice.payments.length > 0 ? formatDate(invoice.payments[invoice.payments.length - 1].date) : 'Pending'}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-label">Days Outstanding</div>
+                        <div class="timeline-value">${getDaysOutstanding(invoice.invoiceDate, invoice.payments[0]?.date)} days</div>
+                    </div>
+                </div>
+
+                ${paymentTable}
+                ${disputeInfo}
+            `;
+        }
+
+        function generatePaymentTable(payments) {
+            if (payments.length === 0) {
+                return '<div style="padding: 20px; text-align: center; color: #6c757d;">No payments received yet</div>';
+            }
+
+            const rows = payments.map(payment => `
+                <tr>
+                    <td>${formatDate(payment.date)}</td>
+                    <td class="amount">${formatCurrency(payment.amount)}</td>
+                    <td>${payment.method}</td>
+                    <td style="font-family: monospace; font-size: 12px;">${payment.referenceNumber}</td>
+                    <td>${getStatusBadge(payment.status)}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="sub-table" style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 12px; color: #495057; font-size: 14px;">Payment Details</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Payment Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Reference Number</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function generateDisputeInfo(dispute) {
+            return `
+                <div class="detail-card" style="border-left: 4px solid #dc3545; margin-top: 16px;">
+                    <h4>Active Dispute</h4>
+                    <div style="font-size: 14px; color: #dc3545; margin: 8px 0; font-weight: 600;">
+                        ${dispute.reason}
+                    </div>
+                    <div style="font-size: 12px; color: #6c757d;">
+                        Raised: ${formatDate(dispute.raisedDate)} (${dispute.age} days ago)<br>
+                        Status: ${dispute.status}<br>
+                        Action: ${dispute.actionRequired}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleExpandInvoice(index) {
+            const expandRow = document.getElementById(`expandable-inv-${index}`);
+            const expandIcon = document.getElementById(`expand-inv-${index}`);
+            
+            if (expandRow.classList.contains('expanded')) {
+                expandRow.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                document.querySelectorAll('.expandable-row.expanded').forEach(row => {
+                    row.classList.remove('expanded');
+                });
+                document.querySelectorAll('.expand-icon.expanded').forEach(icon => {
+                    icon.classList.remove('expanded');
+                });
+                
+                expandRow.classList.add('expanded');
+                expandIcon.classList.add('expanded');
+            }
+        }
+
+        function populatePaymentsTable(data = filteredData) {
+            const tbody = document.getElementById('paymentsTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach((invoice, index) => {
+                const received = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+                const lastPayment = invoice.payments.length > 0 ? invoice.payments[invoice.payments.length - 1] : null;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="expand-icon" id="expand-pay-${index}">▶</span></td>
+                    <td class="invoice-number">${invoice.invoiceNumber}</td>
+                    <td class="account-name">${invoice.accountName}</td>
+                    <td class="amount">${formatCurrency(invoice.invoiceAmount)}</td>
+                    <td class="metric-number">${invoice.payments.length}</td>
+                    <td class="amount" style="color: #28a745;">${formatCurrency(received)}</td>
+                    <td>${lastPayment ? formatDate(lastPayment.date) : '-'}</td>
+                    <td>${lastPayment ? lastPayment.method : '-'}</td>
+                    <td>${getStatusBadge(invoice.paymentStatus)}</td>
+                `;
+                tr.onclick = () => toggleExpandPayment(index);
+                tbody.appendChild(tr);
+
+                // Expandable row
+                const expandTr = document.createElement('tr');
+                expandTr.className = 'expandable-row';
+                expandTr.id = `expandable-pay-${index}`;
+                expandTr.innerHTML = `
+                    <td colspan="9">
+                        <div class="expandable-content">
+                            ${generatePaymentTable(invoice.payments)}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(expandTr);
+            });
+        }
+
+        function toggleExpandPayment(index) {
+            const expandRow = document.getElementById(`expandable-pay-${index}`);
+            const expandIcon = document.getElementById(`expand-pay-${index}`);
+            
+            if (expandRow.classList.contains('expanded')) {
+                expandRow.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                document.querySelectorAll('.expandable-row.expanded').forEach(row => {
+                    row.classList.remove('expanded');
+                });
+                document.querySelectorAll('.expand-icon.expanded').forEach(icon => {
+                    icon.classList.remove('expanded');
+                });
+                
+                expandRow.classList.add('expanded');
+                expandIcon.classList.add('expanded');
+            }
+        }
+
+        function populateReconciliationTable(data = filteredData) {
+            const tbody = document.getElementById('reconciliationTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(invoice => {
+                const variance = invoice.bankStatementAmount - invoice.invoiceAmount;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="invoice-number">${invoice.invoiceNumber}</td>
+                    <td class="account-name">${invoice.accountName}</td>
+                    <td class="amount">${formatCurrency(invoice.invoiceAmount)}</td>
+                    <td class="amount">${formatCurrency(invoice.bankStatementAmount)}</td>
+                    <td class="amount" style="color: ${variance !== 0 ? '#dc3545' : '#28a745'}; font-weight: 600;">
+                        ${variance !== 0 ? formatCurrency(Math.abs(variance)) : '₹0'}
+                    </td>
+                    <td>${getStatusBadge(invoice.reconStatus)}</td>
+                    <td>${invoice.reconDate ? formatDate(invoice.reconDate) : '-'}</td>
+                    <td style="font-family: monospace; font-size: 12px;">
+                        ${invoice.payments.length > 0 ? invoice.payments[0].referenceNumber : '-'}
+                    </td>
+                    <td>
+                        ${invoice.reconStatus === 'Unreconciled' ? 
+                            '<button class="btn" style="padding: 4px 10px; font-size: 12px;">Reconcile</button>' : 
+                            '<span style="color: #28a745; font-size: 12px;">✓ Done</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateDisputesTable() {
+            const tbody = document.getElementById('disputesTableBody');
+            tbody.innerHTML = '';
+            
+            const disputes = invoiceData.filter(inv => inv.disputes.length > 0);
+
+            disputes.forEach(invoice => {
+                const dispute = invoice.disputes[0];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="invoice-number">${invoice.invoiceNumber}</td>
+                    <td class="account-name">${invoice.accountName}</td>
+                    <td class="amount">${formatCurrency(invoice.invoiceAmount)}</td>
+                    <td class="amount" style="color: #dc3545;">${formatCurrency(dispute.amount)}</td>
+                    <td style="max-width: 300px;">${dispute.reason}</td>
+                    <td>${formatDate(dispute.raisedDate)}</td>
+                    <td class="metric-number" style="color: ${dispute.age > 15 ? '#dc3545' : '#495057'}">${dispute.age}</td>
+                    <td>${getStatusBadge(dispute.status)}</td>
+                    <td style="max-width: 250px; font-size: 12px;">${dispute.actionRequired}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (disputes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #6c757d;">No active disputes</td></tr>';
+            }
+        }
+
+        function populateAgingTable() {
+            const tbody = document.getElementById('agingTableBody');
+            tbody.innerHTML = '';
+            
+            // Group by account
+            const accountMap = {};
+            invoiceData.forEach(invoice => {
+                if (!accountMap[invoice.accountName]) {
+                    accountMap[invoice.accountName] = {
+                        total: 0,
+                        current: 0,
+                        days30: 0,
+                        days60: 0,
+                        days90: 0,
+                        oldestInvoice: null,
+                        oldestDays: 0
+                    };
+                }
+
+                const outstanding = calculateOutstanding(invoice);
+                if (outstanding > 0) {
+                    const days = getDaysOutstanding(invoice.invoiceDate);
+                    accountMap[invoice.accountName].total += outstanding;
+
+                    if (days <= 30) accountMap[invoice.accountName].current += outstanding;
+                    else if (days <= 60) accountMap[invoice.accountName].days30 += outstanding;
+                    else if (days <= 90) accountMap[invoice.accountName].days60 += outstanding;
+                    else accountMap[invoice.accountName].days90 += outstanding;
+
+                    if (days > accountMap[invoice.accountName].oldestDays) {
+                        accountMap[invoice.accountName].oldestDays = days;
+                        accountMap[invoice.accountName].oldestInvoice = invoice.invoiceNumber;
+                    }
+                }
+            });
+
+            Object.entries(accountMap).forEach(([account, data]) => {
+                if (data.total > 0) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="account-name">${account}</td>
+                        <td class="amount" style="font-weight: 700;">${formatCurrency(data.total)}</td>
+                        <td class="amount">${formatCurrency(data.current)}</td>
+                        <td class="amount">${formatCurrency(data.days30)}</td>
+                        <td class="amount">${formatCurrency(data.days60)}</td>
+                        <td class="amount" style="color: ${data.days90 > 0 ? '#dc3545' : 'inherit'};">${formatCurrency(data.days90)}</td>
+                        <td>
+                            <span style="font-family: monospace;">${data.oldestInvoice}</span><br>
+                            <span style="font-size: 11px; color: #6c757d;">${data.oldestDays} days old</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function updateSummaryStats(data = filteredData) {
+            const totalInvoices = data.length;
+            const totalInvoiceValue = data.reduce((sum, inv) => sum + inv.invoiceAmount, 0);
+            const totalReceived = data.reduce((sum, inv) => 
+                sum + inv.payments.reduce((pSum, p) => pSum + p.amount, 0), 0);
+            const totalOutstanding = totalInvoiceValue - totalReceived;
+            
+            const collectionRate = totalInvoiceValue > 0 ? 
+                ((totalReceived / totalInvoiceValue) * 100).toFixed(1) : 0;
+            
+            const paidInvoices = data.filter(inv => inv.paymentStatus === 'Paid');
+            const avgDSO = paidInvoices.length > 0 ?
+                Math.round(paidInvoices.reduce((sum, inv) => 
+                    sum + getDaysOutstanding(inv.invoiceDate, inv.payments[0]?.date), 0) / paidInvoices.length) : 0;
+            
+            const reconciledInvoices = data.filter(inv => inv.reconStatus === 'Reconciled').length;
+            const reconRate = totalInvoices > 0 ? 
+                ((reconciledInvoices / totalInvoices) * 100).toFixed(1) : 0;
+            
+            const activeDisputes = data.filter(inv => inv.disputes.length > 0).length;
+            
+            document.getElementById('totalInvoices').textContent = totalInvoices;
+            document.getElementById('totalInvoiceValue').textContent = formatCurrency(totalInvoiceValue);
+            document.getElementById('totalReceived').textContent = formatCurrency(totalReceived);
+            document.getElementById('totalOutstanding').textContent = formatCurrency(totalOutstanding);
+            document.getElementById('collectionRate').textContent = collectionRate + '%';
+            document.getElementById('avgDSO').textContent = avgDSO + ' days';
+            document.getElementById('reconRate').textContent = reconRate + '%';
+            document.getElementById('disputeCount').textContent = activeDisputes;
+        }
+
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const accountFilter = document.getElementById('accountFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const reconFilter = document.getElementById('reconFilter').value;
+            
+            filteredData = invoiceData.filter(invoice => {
+                const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm) ||
+                                    invoice.accountName.toLowerCase().includes(searchTerm) ||
+                                    invoice.poReference.toLowerCase().includes(searchTerm);
+                
+                const matchesAccount = !accountFilter || invoice.accountName === accountFilter;
+                
+                const overdue = isOverdue(invoice.dueDate, invoice.paymentStatus);
+                const displayStatus = overdue && invoice.paymentStatus === 'Pending' ? 'Overdue' : invoice.paymentStatus;
+                const matchesStatus = !statusFilter || displayStatus === statusFilter;
+                
+                const matchesRecon = !reconFilter || invoice.reconStatus === reconFilter;
+                
+                return matchesSearch && matchesAccount && matchesStatus && matchesRecon;
+            });
+            
+            populateInvoicesTable(filteredData);
+            populatePaymentsTable(filteredData);
+            populateReconciliationTable(filteredData);
+            updateSummaryStats(filteredData);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function exportToCSV() {
+            const headers = ['Invoice #', 'PO Reference', 'Account', 'Invoice Date', 'Due Date', 'Invoice Amount', 'Received Amount', 'Outstanding', 'Payment Status', 'Days Outstanding', 'Recon Status'];
+            
+            let csvContent = headers.join(',') + '\n';
+            
+            invoiceData.forEach(invoice => {
+                const received = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+                const outstanding = invoice.invoiceAmount - received;
+                const daysOut = getDaysOutstanding(invoice.invoiceDate, invoice.payments[0]?.date);
+                
+                const csvRow = [
+                    `"${invoice.invoiceNumber}"`,
+                    `"${invoice.poReference}"`,
+                    `"${invoice.accountName}"`,
+                    invoice.invoiceDate,
+                    invoice.dueDate,
+                    invoice.invoiceAmount,
+                    received,
+                    outstanding,
+                    invoice.paymentStatus,
+                    daysOut,
+                    invoice.reconStatus
+                ].join(',');
+                csvContent += csvRow + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Invoice_to_Cash_Dashboard_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        
+        // Initialize the dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            populateInvoicesTable();
+            populatePaymentsTable();
+            populateReconciliationTable();
+            populateDisputesTable();
+            populateAgingTable();
+            updateSummaryStats();
+        });
+    </script>
+</body>
+</html>
