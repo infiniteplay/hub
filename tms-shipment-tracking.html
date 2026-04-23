@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TMS Shipment Report – Finifi</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue:    #2563eb;
+      --blue-lt: #eff6ff;
+      --green:   #16a34a;
+      --green-lt:#f0fdf4;
+      --amber:   #d97706;
+      --amber-lt:#fffbeb;
+      --red:     #dc2626;
+      --red-lt:  #fef2f2;
+      --purple:  #7c3aed;
+      --purple-lt:#f5f3ff;
+      --gray:    #6b7280;
+      --border:  #e5e7eb;
+      --bg:      #f9fafb;
+      --text:    #111827;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      padding-top: 64px;
+    }
+
+    /* FIXED HEADER */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 1000;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px; background: var(--blue); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .logo-text { font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo-text span { color: var(--blue); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .module-tag {
+      background: var(--blue-lt); color: var(--blue);
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .header-btns { display: flex; gap: 8px; }
+    .header-btns button {
+      padding: 7px 14px; border: 1px solid var(--border); border-radius: 6px;
+      background: #f9fafb; font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all .15s;
+    }
+    .header-btns button:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .header-btns button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .header-btns button.primary:hover { background: #1d4ed8; }
+
+    /* FILTERS BAR */
+    .filters-bar {
+      background: #fff; padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .filters-bar input, .filters-bar select {
+      padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; background: #fff; outline: none; color: var(--text);
+    }
+    .filters-bar input:focus, .filters-bar select:focus { border-color: var(--blue); }
+    .filters-bar input[type=text] { width: 240px; }
+    .filter-sep { color: var(--gray); font-size: 12px; }
+
+    /* KPI STRIP */
+    .kpi-strip {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: grid; grid-template-columns: repeat(8, 1fr);
+    }
+    .kpi {
+      padding: 0 20px; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .kpi:first-child { padding-left: 0; }
+    .kpi:last-child  { border-right: none; }
+    .kpi-val { font-size: 26px; font-weight: 700; line-height: 1; color: var(--text); }
+    .kpi-val.blue      { color: var(--blue); }
+    .kpi-val.green     { color: var(--green); }
+    .kpi-val.amber     { color: var(--amber); }
+    .kpi-val.purple    { color: var(--purple); }
+    .kpi-val.darkgreen { color: #15803d; }
+    .kpi-val.steel     { color: #64748b; }
+    .kpi-label { font-size: 12px; color: var(--gray); font-weight: 500; }
+    .kpi-sub   { font-size: 11px; color: #9ca3af; }
+
+    /* TABS */
+    .tabs-bar {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 0 28px; display: flex; overflow-x: auto;
+    }
+    .tab {
+      padding: 13px 20px; font-size: 13px; font-weight: 500;
+      color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent;
+      white-space: nowrap; transition: all .15s; user-select: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .tab .cnt {
+      display: inline-block; margin-left: 6px;
+      background: #f3f4f6; color: var(--gray);
+      border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 600;
+    }
+    .tab.active .cnt { background: var(--blue-lt); color: var(--blue); }
+
+    /* TABLE */
+    .table-wrap { padding: 0 28px 40px; background: #fff; }
+    .table-container { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #f8f9fa; color: #374151; padding: 11px 16px; text-align: left;
+      font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    thead th.sort { cursor: pointer; }
+    thead th.sort:hover { background: #f1f5f9; }
+    tbody tr.main-row { border-bottom: 1px solid #f3f4f6; transition: background .1s; }
+    tbody tr.main-row:hover { background: #fafbff; }
+    td { padding: 14px 16px; vertical-align: middle; }
+    td.mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+
+    /* STAGE PILLS */
+    .stage-pills { display: flex; gap: 3px; }
+    .sp {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 20px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      border: 1px solid #e2e8f0; background: #f3f4f6; color: #9ca3af;
+    }
+    .sp.done   { background: var(--green-lt); color: var(--green);  border-color: #bbf7d0; }
+    .sp.cur    { background: var(--blue-lt);  color: var(--blue);   border-color: #bfdbfe; }
+    .sp.exc    { background: var(--red-lt);   color: var(--red);    border-color: #fecaca; }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .bdot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .8; flex-shrink: 0; }
+    .b-pending    { background: #f1f5f9; color: #64748b; }
+    .b-lr-created { background: var(--blue-lt); color: var(--blue); }
+    .b-in-transit { background: #e0f2fe; color: #0369a1; }
+    .b-out-del    { background: var(--purple-lt); color: var(--purple); }
+    .b-delivered  { background: var(--green-lt); color: var(--green); }
+    .b-grn-done   { background: #dcfce7; color: #15803d; }
+    .b-exception  { background: var(--red-lt); color: var(--red); }
+
+    /* PARTNER CHIP */
+    .pchip {
+      display: inline-block; padding: 3px 9px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; border: 1px solid var(--border);
+      color: var(--text); background: #f9fafb;
+    }
+
+    /* TAT */
+    .tat { font-weight: 600; font-size: 12px; }
+    .tat.good { color: var(--green); }
+    .tat.warn { color: var(--amber); }
+    .tat.over { color: var(--red);   }
+
+    /* EXPAND BTN */
+    .xbtn {
+      cursor: pointer; background: none; border: 1px solid #d1d5db;
+      border-radius: 4px; width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--gray); font-size: 12px; font-weight: 700; transition: all .15s; line-height: 1;
+    }
+    .xbtn:hover { border-color: var(--blue); color: var(--blue); }
+    .xbtn.open  { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    /* DRILLDOWN */
+    .drill-row { display: none; }
+    .drill-row.open { display: table-row; }
+    .drill-cell { padding: 0 !important; border-bottom: 2px solid var(--blue) !important; background: #f8faff; }
+
+    /* Route bar */
+    .d-route {
+      display: flex; align-items: center;
+      padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border);
+      gap: 0;
+    }
+    .d-endpoint { min-width: 180px; }
+    .d-endpoint.right { text-align: right; min-width: 260px; }
+    .d-ep-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray); margin-bottom: 3px; }
+    .d-ep-name  { font-size: 15px; font-weight: 700; color: var(--text); }
+    .d-ep-sub   { font-size: 11px; color: var(--gray); margin-top: 2px; }
+    .d-mid {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0 20px;
+    }
+    .d-line-row { display: flex; align-items: center; width: 100%; }
+    .d-line     { flex: 1; height: 1px; background: #cbd5e1; }
+    .d-arrow    { color: #94a3b8; font-size: 16px; }
+    .d-partner-pill {
+      font-size: 11px; font-weight: 600; color: var(--blue);
+      background: var(--blue-lt); padding: 2px 10px; border-radius: 20px;
+    }
+    .d-lr-mono  { font-family: monospace; font-size: 11px; color: var(--gray); }
+
+    /* Alert bar */
+    .d-alert {
+      padding: 9px 24px; font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .d-alert.warn   { background: #fff7ed; border-bottom: 1px solid #fed7aa; color: var(--amber); }
+    .d-alert.danger { background: var(--red-lt); border-bottom: 1px solid #fecaca; color: var(--red); }
+
+    /* 4-col cards */
+    .d-cards {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); border-bottom: 1px solid var(--border);
+    }
+    .d-card { background: #fff; padding: 18px 20px; }
+    .d-card-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+      color: var(--gray); border-left: 3px solid var(--blue); padding-left: 8px; margin-bottom: 14px;
+    }
+    .d-card-title.orange { border-color: var(--amber); }
+    .d-card-title.green  { border-color: var(--green); }
+    .d-card-title.purple { border-color: var(--purple); }
+    .dkv { margin-bottom: 10px; }
+    .dkv:last-child { margin-bottom: 0; }
+    .dk  { font-size: 11px; color: var(--gray); margin-bottom: 2px; }
+    .dv  { font-size: 13px; font-weight: 600; color: var(--text); }
+    .dv.mono    { font-family: monospace; font-size: 12px; color: var(--blue); }
+    .dv.muted   { color: #9ca3af; font-weight: 400; }
+    .dv.good    { color: var(--green); }
+    .dv.bad     { color: var(--red); }
+    .wb-chips   { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+    .wb-chip    { font-family: monospace; font-size: 11px; font-weight: 700; background: #1e293b; color: #fff; padding: 3px 8px; border-radius: 4px; }
+    .wb-chip.doc{ background: #ea580c; }
+    .sa-btns    { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .sa-btn {
+      padding: 5px 12px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 12px; font-weight: 500; cursor: pointer; background: #fff; color: var(--text); transition: all .15s;
+    }
+    .sa-btn:hover      { border-color: var(--blue); color: var(--blue); }
+    .sa-btn.primary    { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .sa-btn.primary:hover { background: #1d4ed8; }
+    .sa-btn.danger     { color: var(--red); border-color: #fca5a5; }
+    .sa-btn.danger:hover { background: var(--red-lt); }
+
+    /* Timeline */
+    .d-timeline { padding: 18px 24px 24px; background: #fff; }
+    .d-tl-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+      color: var(--gray); margin-bottom: 16px;
+    }
+    .tl-item    { display: flex; gap: 14px; position: relative; }
+    .tl-left    { display: flex; flex-direction: column; align-items: center; width: 14px; flex-shrink: 0; }
+    .tl-dot     { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #e2e8f0; background: #fff; margin-top: 3px; flex-shrink: 0; }
+    .tl-dot.done   { background: var(--green); border-color: var(--green); }
+    .tl-dot.active { background: var(--blue);  border-color: var(--blue);  }
+    .tl-dot.exc    { background: var(--red);   border-color: var(--red);   }
+    .tl-dot.pending{ background: #fff;          border-color: #cbd5e1;      }
+    .tl-vline   { flex: 1; width: 1px; background: #e5e7eb; min-height: 14px; margin-top: 2px; }
+    .tl-item:last-child .tl-vline { display: none; }
+    .tl-body    { flex: 1; padding-bottom: 14px; }
+    .tl-label   { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tl-label.muted { font-weight: 400; color: var(--gray); }
+    .tl-sub     { font-size: 11px; color: var(--gray); margin-top: 2px; }
+    .tl-time    { font-size: 11px; color: var(--gray); white-space: nowrap; padding-top: 3px; padding-left: 12px; min-width: 150px; text-align: right; }
+
+    /* Empty */
+    .empty { padding: 60px; text-align: center; color: var(--gray); }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    @media (max-width: 1200px) {
+      .d-cards   { grid-template-columns: repeat(2,1fr); }
+      .kpi-strip { grid-template-columns: repeat(4,1fr); }
+      .kpi { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">Fi</div>
+    <span class="logo-text">fini<span>fi</span></span>
+  </div>
+  <div class="header-right">
+    <span class="module-tag">TMS &middot; Shipment Report</span>
+    <div class="header-btns">
+      <button onclick="exportCSV()">Export CSV</button>
+      <button class="primary">Refresh</button>
+    </div>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <input type="text" id="searchInput" placeholder="Search invoice, LR, customer, PO…" oninput="applyFilters()" />
+  <select id="partnerFilter" onchange="applyFilters()">
+    <option value="">All Partners</option>
+    <option>Delhivery</option>
+    <option>SafeExpress</option>
+    <option>BlueDart</option>
+    <option>DTDC</option>
+  </select>
+  <select id="statusFilter" onchange="applyFilters()">
+    <option value="">All Statuses</option>
+    <option value="LR Pending">LR Pending</option>
+    <option value="LR Created">LR Created</option>
+    <option value="In Transit">In Transit</option>
+    <option value="Out for Delivery">Out for Delivery</option>
+    <option value="Delivered">Delivered</option>
+    <option value="GRN Done">GRN Done</option>
+    <option value="Exception">Exception</option>
+  </select>
+  <span class="filter-sep">From</span>
+  <input type="date" id="dateFrom" onchange="applyFilters()" />
+  <span class="filter-sep">To</span>
+  <input type="date" id="dateTo" onchange="applyFilters()" />
+</div>
+
+<div class="kpi-strip">
+  <div class="kpi">
+    <div class="kpi-val blue" id="k-total">—</div>
+    <div class="kpi-label">Total Invoices</div>
+    <div class="kpi-sub">in period</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val steel" id="k-lr-pending">—</div>
+    <div class="kpi-label">LR Pending</div>
+    <div class="kpi-sub">awaiting assignment</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val blue" id="k-in-transit">—</div>
+    <div class="kpi-label">In Transit</div>
+    <div class="kpi-sub">moving + OFD</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val green" id="k-delivered">—</div>
+    <div class="kpi-label">Delivered</div>
+    <div class="kpi-sub" id="k-delivered-pct">—</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val darkgreen" id="k-grn">—</div>
+    <div class="kpi-label">GRN Confirmed</div>
+    <div class="kpi-sub" id="k-grn-pct">—</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val amber" id="k-exc">—</div>
+    <div class="kpi-label">Exceptions</div>
+    <div class="kpi-sub">held / delayed / RTO</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val purple" id="k-avg-tat">—</div>
+    <div class="kpi-label">Avg Delivery TAT</div>
+    <div class="kpi-sub">days (delivered)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val blue" id="k-pod-pct">—</div>
+    <div class="kpi-label">POD Received</div>
+    <div class="kpi-sub">% of delivered</div>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <div class="tab active" onclick="setTab('all')"            id="tab-all">All <span class="cnt" id="tc-all">0</span></div>
+  <div class="tab" onclick="setTab('LR Pending')"           id="tab-LR Pending">LR Pending <span class="cnt" id="tc-LR Pending">0</span></div>
+  <div class="tab" onclick="setTab('LR Created')"           id="tab-LR Created">LR Created <span class="cnt" id="tc-LR Created">0</span></div>
+  <div class="tab" onclick="setTab('In Transit')"           id="tab-In Transit">In Transit <span class="cnt" id="tc-In Transit">0</span></div>
+  <div class="tab" onclick="setTab('Out for Delivery')"     id="tab-Out for Delivery">Out for Delivery <span class="cnt" id="tc-Out for Delivery">0</span></div>
+  <div class="tab" onclick="setTab('Delivered')"            id="tab-Delivered">Delivered <span class="cnt" id="tc-Delivered">0</span></div>
+  <div class="tab" onclick="setTab('GRN Done')"             id="tab-GRN Done">GRN Done <span class="cnt" id="tc-GRN Done">0</span></div>
+  <div class="tab" onclick="setTab('Exception')"            id="tab-Exception">Exceptions <span class="cnt" id="tc-Exception">0</span></div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th class="sort" onclick="sortBy('invoice')">Invoice No</th>
+          <th>PO Number</th>
+          <th>Customer</th>
+          <th>Destination</th>
+          <th class="sort" onclick="sortBy('invDate')">Inv Date</th>
+          <th>Inv Value</th>
+          <th>LR / AWB</th>
+          <th>Partner</th>
+          <th>Stages</th>
+          <th>Status</th>
+          <th class="sort" onclick="sortBy('tat')">ETA / TAT</th>
+          <th>Exception</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none">
+      <p>No shipments match the current filters.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const rawData = [
+  {
+    id:1, invoice:"HRPS/2627/00338", po:"2940310012162",
+    customer:"Hands on Trades Pvt Ltd", customerCity:"Coimbatore, TN",
+    origin:"Finifi B2B, Bangalore",
+    dest:"Survey No. 91/1B2, Chettipedu Industrial Estate, Mevalur, Coimbatore, Tamil Nadu",
+    invDate:"2026-04-18", invValue:63621.42,
+    partner:"Delhivery", lr:"220245262",
+    waybills:["85148910000674","85148910000685","85148910000696"], waybillDoc:"85148910000696",
+    boxes:2, qty:256, weightKg:600,
+    status:"In Transit",
+    S:[1,1,1,0,0,0], // INV LR TR OFD DEL GRN
+    podReceived:false, podDate:null, grnDate:null, grnRef:null,
+    tatDays:null, tatTarget:5,
+    eta:"30 Apr 2026", apptDate:"30 Apr 2026", apptSlot:"01:00 – 22:06",
+    exception:null,
+    events:[
+      { label:"NTD Updated", sub:"In transit – Delhi, Rohini RP", time:"22 Apr 2026, 04:01 PM", t:"active" },
+      { label:"Manifest Uploaded", sub:"Delhi Rohini RP Hub", time:"22 Apr 2026, 03:41 PM", t:"done" },
+      { label:"LR Created – Delhivery", sub:"LR 220245262 · 2 boxes · 600 kg · FOD", time:"18 Apr 2026, 03:10 PM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00338 · Rs 63,621 · 2 SKUs", time:"18 Apr 2026, 11:22 AM", t:"done" }
+    ],
+    pending:[
+      { label:"Delivery Appointment Set", sub:"30 Apr 2026 · Slot 01:00–22:06", time:"Scheduled", t:"pending" },
+      { label:"Delivered / POD", sub:"Awaiting confirmation", time:"—", t:"pending" },
+      { label:"GRN Confirmed", sub:"Awaiting GRN from customer", time:"—", t:"pending" }
+    ]
+  },
+  {
+    id:2, invoice:"HRPS/2627/00299", po:"2940310011900",
+    customer:"BigBasket – Jaywant Warehouse", customerCity:"Pune, MH",
+    origin:"Finifi B2B, Bangalore", dest:"Jaywant Warehouse, Pune, Maharashtra",
+    invDate:"2026-04-02", invValue:148500.00,
+    partner:"SafeExpress", lr:"SE9981234011",
+    waybills:["SE9981234011"], waybillDoc:null,
+    boxes:5, qty:620, weightKg:1200,
+    status:"Delivered", S:[1,1,1,1,1,0],
+    podReceived:true, podDate:"07 Apr 2026", grnDate:null, grnRef:null,
+    tatDays:5, tatTarget:5,
+    eta:"07 Apr 2026", apptDate:"07 Apr 2026", apptSlot:"09:00 – 18:00",
+    exception:null,
+    events:[
+      { label:"Delivered – POD Signed", sub:"Pune Delivery Hub", time:"07 Apr 2026, 11:30 AM", t:"done" },
+      { label:"Out for Delivery", sub:"Pune Sorting Centre", time:"06 Apr 2026, 08:45 AM", t:"done" },
+      { label:"In Transit", sub:"Mumbai Gateway", time:"04 Apr 2026, 07:00 PM", t:"done" },
+      { label:"LR Created – SafeExpress", sub:"LR SE9981234011 · 5 boxes · 1200 kg", time:"02 Apr 2026, 09:30 AM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00299 · Rs 1,48,500 · 3 SKUs", time:"02 Apr 2026, 09:00 AM", t:"done" }
+    ],
+    pending:[ { label:"GRN Confirmed", sub:"Awaiting GRN from customer", time:"—", t:"pending" } ]
+  },
+  {
+    id:3, invoice:"HRPS/2627/00312", po:"2940310012200",
+    customer:"Spencer's Retail", customerCity:"Kolkata, WB",
+    origin:"Finifi B2B, Bangalore", dest:"Spencer's Wh, Kolkata, West Bengal",
+    invDate:"2026-04-18", invValue:54890.00,
+    partner:null, lr:null, waybills:[], waybillDoc:null,
+    boxes:null, qty:null, weightKg:null,
+    status:"LR Pending", S:[1,0,0,0,0,0],
+    podReceived:false, podDate:null, grnDate:null, grnRef:null,
+    tatDays:null, tatTarget:3,
+    eta:null, apptDate:null, apptSlot:null,
+    exception:"LR not created – 4 days elapsed",
+    events:[
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00312 · Rs 54,890", time:"18 Apr 2026, 10:00 AM", t:"done" },
+      { label:"LR Creation Pending", sub:"Partner not yet assigned", time:"—", t:"exc" }
+    ],
+    pending:[]
+  },
+  {
+    id:4, invoice:"HRPS/2627/00291", po:"2940310011800",
+    customer:"Reliance Retail Ltd", customerCity:"Mumbai, MH",
+    origin:"Finifi B2B, Bangalore", dest:"Reliance DC, Turbhe, Mumbai, Maharashtra",
+    invDate:"2026-04-15", invValue:118450.00,
+    partner:"Delhivery", lr:"220241100", waybills:["220241100"], waybillDoc:null,
+    boxes:4, qty:510, weightKg:900,
+    status:"Exception", S:[1,1,1,0,0,0],
+    podReceived:false, podDate:null, grnDate:null, grnRef:null,
+    tatDays:null, tatTarget:4,
+    eta:"20 Apr 2026", apptDate:null, apptSlot:null,
+    exception:"On Hold at Mumbai Hub",
+    events:[
+      { label:"On Hold – Consignee Issue", sub:"Mumbai Hub", time:"20 Apr 2026, 02:00 PM", t:"exc" },
+      { label:"Out for Delivery – Attempted", sub:"Mumbai Hub", time:"19 Apr 2026, 09:30 AM", t:"done" },
+      { label:"In Transit", sub:"Mumbai Gateway", time:"17 Apr 2026, 08:00 PM", t:"done" },
+      { label:"LR Created – Delhivery", sub:"LR 220241100 · 4 boxes · 900 kg", time:"15 Apr 2026, 02:00 PM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00291 · Rs 1,18,450", time:"15 Apr 2026, 10:00 AM", t:"done" }
+    ],
+    pending:[]
+  },
+  {
+    id:5, invoice:"HRPS/2627/00305", po:"2940310012050",
+    customer:"DMart Ltd", customerCity:"Pune, MH",
+    origin:"Finifi B2B, Bangalore", dest:"DMart DC, Pimpri-Chinchwad, Pune, Maharashtra",
+    invDate:"2026-04-27", invValue:87340.00,
+    partner:"SafeExpress", lr:"220243300", waybills:["220243300"], waybillDoc:null,
+    boxes:3, qty:390, weightKg:750,
+    status:"LR Created", S:[1,1,0,0,0,0],
+    podReceived:false, podDate:null, grnDate:null, grnRef:null,
+    tatDays:null, tatTarget:3,
+    eta:"28 Apr 2026", apptDate:"28 Apr 2026", apptSlot:"10:00 – 18:00",
+    exception:null,
+    events:[
+      { label:"LR Generated – Pickup Scheduled", sub:"LR 220243300 · 3 boxes · 750 kg", time:"27 Apr 2026, 01:30 PM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00305 · Rs 87,340 · 2 SKUs", time:"27 Apr 2026, 10:00 AM", t:"done" }
+    ],
+    pending:[
+      { label:"Pickup & In Transit", sub:"Awaiting pickup", time:"—", t:"pending" },
+      { label:"Delivered / POD", sub:"Awaiting", time:"—", t:"pending" },
+      { label:"GRN Confirmed", sub:"Awaiting GRN from customer", time:"—", t:"pending" }
+    ]
+  },
+  {
+    id:6, invoice:"HRPS/2627/00320", po:"2940310012100",
+    customer:"Reliance Retail Ltd", customerCity:"Delhi, DL",
+    origin:"Finifi B2B, Bangalore", dest:"Reliance DC, Connaught Place, Delhi",
+    invDate:"2026-04-11", invValue:234100.00,
+    partner:"BlueDart", lr:"220244800", waybills:["220244800"], waybillDoc:null,
+    boxes:7, qty:840, weightKg:1600,
+    status:"GRN Done", S:[1,1,1,1,1,1],
+    podReceived:true, podDate:"14 Apr 2026", grnDate:"15 Apr 2026", grnRef:"GRN-RRL-DEL-320",
+    tatDays:3, tatTarget:4,
+    eta:"14 Apr 2026", apptDate:"14 Apr 2026", apptSlot:"09:00 – 18:00",
+    exception:null,
+    events:[
+      { label:"GRN Confirmed", sub:"GRN-RRL-DEL-320", time:"15 Apr 2026, 11:00 AM", t:"done" },
+      { label:"Delivered – POD Received", sub:"Reliance DC, Delhi", time:"14 Apr 2026, 02:30 PM", t:"done" },
+      { label:"Out for Delivery", sub:"Delhi South Hub", time:"14 Apr 2026, 08:00 AM", t:"done" },
+      { label:"In Transit", sub:"Delhi Gateway", time:"13 Apr 2026, 06:00 PM", t:"done" },
+      { label:"LR Created – BlueDart", sub:"LR 220244800 · 7 boxes · 1600 kg", time:"11 Apr 2026, 03:00 PM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00320 · Rs 2,34,100 · 4 SKUs", time:"11 Apr 2026, 10:00 AM", t:"done" }
+    ],
+    pending:[]
+  },
+  {
+    id:7, invoice:"HRPS/2627/00278", po:"2940310011700",
+    customer:"Hands on Trades Pvt Ltd", customerCity:"Coimbatore, TN",
+    origin:"Finifi B2B, Bangalore", dest:"Survey No. 91/1B2, Chettipedu, Mevalur, Coimbatore, TN",
+    invDate:"2026-04-12", invValue:48210.00,
+    partner:"Delhivery", lr:"220240900", waybills:["220240900"], waybillDoc:null,
+    boxes:2, qty:200, weightKg:450,
+    status:"Delivered", S:[1,1,1,1,1,0],
+    podReceived:true, podDate:"16 Apr 2026", grnDate:null, grnRef:null,
+    tatDays:4, tatTarget:5,
+    eta:"16 Apr 2026", apptDate:"16 Apr 2026", apptSlot:"09:00 – 18:00",
+    exception:null,
+    events:[
+      { label:"Delivered – POD Signed", sub:"Coimbatore Hub", time:"16 Apr 2026, 03:00 PM", t:"done" },
+      { label:"Out for Delivery", sub:"Coimbatore Hub", time:"16 Apr 2026, 09:00 AM", t:"done" },
+      { label:"In Transit", sub:"Chennai Gateway", time:"14 Apr 2026, 11:00 PM", t:"done" },
+      { label:"LR Created – Delhivery", sub:"LR 220240900 · 2 boxes · 450 kg", time:"12 Apr 2026, 02:00 PM", t:"done" },
+      { label:"Invoice Fetched from SAP", sub:"INV HRPS/2627/00278 · Rs 48,210", time:"12 Apr 2026, 10:00 AM", t:"done" }
+    ],
+    pending:[ { label:"GRN Confirmed", sub:"Awaiting GRN from customer", time:"—", t:"pending" } ]
+  }
+];
+
+/* ── state ── */
+let activeTab = 'all', sortField = null, sortAsc = true, openDrill = null;
+
+const statusBadgeMap = {
+  'LR Pending':'b-pending','LR Created':'b-lr-created','In Transit':'b-in-transit',
+  'Out for Delivery':'b-out-del','Delivered':'b-delivered','GRN Done':'b-grn-done','Exception':'b-exception'
+};
+const stageKeys   = [0,1,2,3,4,5]; // indices into r.S
+const stageLabels = ['IN','LR','TR','PO','GR','GN'];
+
+/* ── stage pills ── */
+function stagePills(r) {
+  return '<div class="stage-pills">' + stageKeys.map((i) => {
+    let cls = '';
+    if (r.S[i]) {
+      cls = (r.status==='Exception' && i===2 && !r.S[3]) ? 'exc' : 'done';
+    } else if (i===0 || r.S[i-1]) {
+      cls = r.status==='Exception' ? 'exc' : 'cur';
+    }
+    return `<span class="sp ${cls}">${stageLabels[i]}</span>`;
+  }).join('') + '</div>';
+}
+
+/* ── tat ── */
+function tatHTML(r) {
+  if (!r.S[4]) return '<span style="color:#9ca3af;font-size:12px">—</span>';
+  const t = r.tatDays, tgt = r.tatTarget;
+  const cls = t <= tgt ? 'good' : t <= tgt+1 ? 'warn' : 'over';
+  return `<span class="tat ${cls}">${t}d${t>tgt?' (+'+( t-tgt)+'d)':''}</span>`;
+}
+
+/* ── filtered data ── */
+function getFiltered() {
+  const q  = document.getElementById('searchInput').value.toLowerCase();
+  const p  = document.getElementById('partnerFilter').value;
+  const s  = document.getElementById('statusFilter').value;
+  const df = document.getElementById('dateFrom').value;
+  const dt = document.getElementById('dateTo').value;
+  let d = rawData.filter(r => {
+    if (q && ![r.invoice, r.customer, r.lr||'', r.po].some(v=>v.toLowerCase().includes(q))) return false;
+    if (p && r.partner !== p) return false;
+    if (s && r.status  !== s) return false;
+    if (df && r.invDate < df) return false;
+    if (dt && r.invDate > dt) return false;
+    if (activeTab !== 'all' && r.status !== activeTab) return false;
+    return true;
+  });
+  if (sortField==='invoice') d.sort((a,b)=>sortAsc?a.invoice.localeCompare(b.invoice):b.invoice.localeCompare(a.invoice));
+  if (sortField==='tat')     d.sort((a,b)=>sortAsc?(a.tatDays||999)-(b.tatDays||999):(b.tatDays||999)-(a.tatDays||999));
+  if (sortField==='invDate') d.sort((a,b)=>sortAsc?a.invDate.localeCompare(b.invDate):b.invDate.localeCompare(a.invDate));
+  return d;
+}
+
+/* ── drilldown HTML ── */
+function drillHTML(r) {
+  // Route
+  const midPart = r.partner
+    ? `<div class="d-partner-pill">${r.partner}</div><div class="d-lr-mono">${r.lr}</div>`
+    : `<div class="d-partner-pill" style="background:#f1f5f9;color:#64748b">Partner Pending</div>`;
+  const route = `<div class="d-route">
+    <div class="d-endpoint">
+      <div class="d-ep-label">Origin</div>
+      <div class="d-ep-name">Finifi B2B</div>
+      <div class="d-ep-sub">Bangalore</div>
+    </div>
+    <div class="d-mid">
+      <div class="d-line-row">
+        <div class="d-line"></div>
+        <div class="d-arrow">&#8594;</div>
+        <div class="d-line"></div>
+      </div>
+      ${midPart}
+    </div>
+    <div class="d-endpoint right">
+      <div class="d-ep-label">Destination</div>
+      <div class="d-ep-name">${r.customer}</div>
+      <div class="d-ep-sub">${r.dest}</div>
+    </div>
+  </div>`;
+
+  // Alert
+  const alert = r.exception
+    ? `<div class="d-alert danger">${r.exception}</div>` : '';
+
+  // Waybills
+  const wbHtml = r.waybills.length
+    ? r.waybills.map(w=>`<span class="wb-chip${w===r.waybillDoc?' doc':''}">${w}</span>`).join('')
+    : '<span class="dv muted">Awaiting</span>';
+
+  // Actions
+  let actions = '';
+  if (r.status==='LR Pending') actions = `<div class="sa-btns"><button class="sa-btn primary">Create LR</button></div>`;
+  else if (r.status==='In Transit'||r.status==='LR Created') actions = `<div class="sa-btns"><button class="sa-btn">Track LR</button><button class="sa-btn">Hold</button></div>`;
+  else if (r.status==='Exception') actions = `<div class="sa-btns"><button class="sa-btn">Track LR</button><button class="sa-btn danger">Escalate</button></div>`;
+
+  const tatOk = r.tatDays ? (r.tatDays<=r.tatTarget?'good':'bad') : '';
+
+  const cards = `<div class="d-cards">
+    <div class="d-card">
+      <div class="d-card-title">Invoice Details</div>
+      <div class="dkv"><div class="dk">Invoice No.</div><div class="dv mono">${r.invoice}</div></div>
+      <div class="dkv"><div class="dk">PO Number</div><div class="dv mono">${r.po}</div></div>
+      <div class="dkv"><div class="dk">Invoice Date</div><div class="dv">${r.invDate}</div></div>
+      <div class="dkv"><div class="dk">Invoice Value</div><div class="dv">Rs ${r.invValue.toLocaleString('en-IN',{maximumFractionDigits:2})}</div></div>
+    </div>
+    <div class="d-card">
+      <div class="d-card-title orange">Shipment Details</div>
+      <div class="dkv"><div class="dk">LR / AWB</div><div class="dv mono">${r.lr||'<span class="dv muted">Awaiting</span>'}</div></div>
+      <div class="dkv"><div class="dk">Logistics Partner</div><div class="dv">${r.partner||'<span class="dv muted">—</span>'}</div></div>
+      <div class="dkv"><div class="dk">Boxes / Qty</div><div class="dv">${r.boxes!=null?r.boxes+' boxes &middot; '+r.qty+' units':'<span class="dv muted">—</span>'}</div></div>
+      <div class="dkv"><div class="dk">Waybill Numbers</div><div class="wb-chips">${wbHtml}</div></div>
+      <div class="dkv"><div class="dk">LR Created</div><div class="dv">${r.S[1]?r.invDate:'<span class="dv muted">—</span>'}</div></div>
+    </div>
+    <div class="d-card">
+      <div class="d-card-title green">Delivery Appointment</div>
+      <div class="dkv"><div class="dk">Scheduled Date</div><div class="dv">${r.apptDate||'<span class="dv muted">—</span>'}</div></div>
+      <div class="dkv"><div class="dk">Time Slot</div><div class="dv">${r.apptSlot||'<span class="dv muted">—</span>'}</div></div>
+      <div class="dkv"><div class="dk">ETA</div><div class="dv">${r.eta||'<span class="dv muted">—</span>'}</div></div>
+      <div class="dkv"><div class="dk">POD Received</div><div class="dv ${r.podReceived?'good':''}">${r.podReceived?'Yes – '+r.podDate:'<span class="dv muted">Awaiting</span>'}</div></div>
+      <div class="dkv"><div class="dk">GRN Confirmed</div><div class="dv ${r.S[5]?'good':''}">${r.S[5]?'Yes – '+r.grnDate:'<span class="dv muted">Awaiting</span>'}</div></div>
+      ${r.grnRef?`<div class="dkv"><div class="dk">GRN Reference</div><div class="dv mono">${r.grnRef}</div></div>`:''}
+    </div>
+    <div class="d-card">
+      <div class="d-card-title purple">Current Status</div>
+      <div style="margin-bottom:12px"><span class="badge ${statusBadgeMap[r.status]||'b-pending'}"><span class="bdot"></span>${r.status}</span></div>
+      ${r.exception?`<div style="font-size:12px;color:var(--red);font-weight:500;margin-bottom:10px">${r.exception}</div>`:''}
+      <div class="dkv"><div class="dk">TAT Target</div><div class="dv">${r.tatTarget} days</div></div>
+      <div class="dkv"><div class="dk">Actual TAT</div><div class="dv ${tatOk}">${r.tatDays?r.tatDays+' days':'<span class="dv muted">—</span>'}</div></div>
+      ${actions}
+    </div>
+  </div>`;
+
+  // Timeline
+  const allEvt = [...r.events, ...(r.pending||[])];
+  const tlItems = allEvt.map(e => `
+    <div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot ${e.t}"></div>
+        <div class="tl-vline"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-label ${e.t==='pending'?'muted':''}">${e.label}</div>
+        <div class="tl-sub">${e.sub}</div>
+      </div>
+      <div class="tl-time">${e.time}</div>
+    </div>`).join('');
+
+  const timeline = `<div class="d-timeline">
+    <div class="d-tl-title">Shipment Timeline — Invoice to Current</div>
+    <div>${tlItems}</div>
+  </div>`;
+
+  return route + alert + cards + timeline;
+}
+
+/* ── render table ── */
+function renderTable() {
+  const data = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  document.getElementById('emptyState').style.display = data.length ? 'none' : 'block';
+
+  data.forEach(r => {
+    const excHTML = r.exception
+      ? `<span style="font-size:11px;font-weight:600;color:var(--red)">${r.exception}</span>`
+      : '<span style="color:#d1d5db">—</span>';
+
+    const etaHTML = (() => {
+      if (r.S[4]) return `<div style="font-size:12px;color:var(--text);font-weight:600">${r.eta}</div>${tatHTML(r)}`;
+      if (r.eta)  return `<div style="font-size:12px;color:var(--gray)">${r.eta}</div>`;
+      return '<span style="color:#9ca3af;font-size:12px">—</span>';
+    })();
+
+    const tr = document.createElement('tr');
+    tr.className = 'main-row';
+    tr.id = `row-${r.id}`;
+    tr.innerHTML = `
+      <td><button class="xbtn" onclick="toggleDrill(${r.id})">+</button></td>
+      <td class="mono" style="color:var(--blue);font-weight:600">${r.invoice}</td>
+      <td class="mono" style="color:var(--gray)">${r.po}</td>
+      <td>
+        <div style="font-weight:600">${r.customer}</div>
+        <div style="font-size:11px;color:var(--gray);margin-top:3px">${r.customerCity}</div>
+      </td>
+      <td style="font-size:12px;color:var(--gray);max-width:180px">${r.dest.split(',').slice(0,2).join(',')}</td>
+      <td style="color:var(--gray);font-size:12px">${r.invDate}</td>
+      <td style="font-weight:600">Rs ${r.invValue.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+      <td class="mono" style="font-size:12px">${r.lr||'<span style="color:#9ca3af">Pending</span>'}</td>
+      <td>${r.partner?`<span class="pchip">${r.partner}</span>`:'<span style="color:#9ca3af;font-size:12px">—</span>'}</td>
+      <td>${stagePills(r)}</td>
+      <td><span class="badge ${statusBadgeMap[r.status]||'b-pending'}"><span class="bdot"></span>${r.status}</span></td>
+      <td>${etaHTML}</td>
+      <td>${excHTML}</td>`;
+    tbody.appendChild(tr);
+
+    const dr = document.createElement('tr');
+    dr.className = 'drill-row';
+    dr.id = `drill-${r.id}`;
+    dr.innerHTML = `<td colspan="13" class="drill-cell">${drillHTML(r)}</td>`;
+    tbody.appendChild(dr);
+  });
+}
+
+/* ── toggle drill ── */
+function toggleDrill(id) {
+  const dr  = document.getElementById(`drill-${id}`);
+  const btn = document.querySelector(`#row-${id} .xbtn`);
+  if (openDrill && openDrill !== id) {
+    document.getElementById(`drill-${openDrill}`).classList.remove('open');
+    const ob = document.querySelector(`#row-${openDrill} .xbtn`);
+    if (ob) { ob.textContent='+'; ob.classList.remove('open'); }
+  }
+  const isOpen = dr.classList.contains('open');
+  dr.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '–';
+  btn.classList.toggle('open', !isOpen);
+  openDrill = isOpen ? null : id;
+}
+
+/* ── KPIs ── */
+function updateKPIs() {
+  const d = rawData, n = d.length;
+  const lrPending = d.filter(r=>r.status==='LR Pending').length;
+  const inTransit = d.filter(r=>r.status==='In Transit'||r.status==='Out for Delivery').length;
+  const delivered = d.filter(r=>r.S[4]).length;
+  const grn       = d.filter(r=>r.S[5]).length;
+  const exc       = d.filter(r=>r.status==='Exception').length;
+  const tats      = d.filter(r=>r.tatDays).map(r=>r.tatDays);
+  const avgTat    = tats.length ? (tats.reduce((a,b)=>a+b,0)/tats.length).toFixed(1) : '—';
+  const podPct    = delivered ? Math.round(d.filter(r=>r.podReceived).length/delivered*100)+'%' : '—';
+  document.getElementById('k-total').textContent         = n;
+  document.getElementById('k-lr-pending').textContent    = lrPending;
+  document.getElementById('k-in-transit').textContent    = inTransit;
+  document.getElementById('k-delivered').textContent     = delivered;
+  document.getElementById('k-delivered-pct').textContent = Math.round(delivered/n*100)+'% of total';
+  document.getElementById('k-grn').textContent           = grn;
+  document.getElementById('k-grn-pct').textContent       = delivered ? Math.round(grn/delivered*100)+'% of delivered' : '—';
+  document.getElementById('k-exc').textContent           = exc;
+  document.getElementById('k-avg-tat').textContent       = avgTat==='—'?'—':avgTat+'d';
+  document.getElementById('k-pod-pct').textContent       = podPct;
+}
+
+/* ── tabs ── */
+function updateTabs() {
+  ['LR Pending','LR Created','In Transit','Out for Delivery','Delivered','GRN Done','Exception'].forEach(s=>{
+    const el = document.getElementById('tc-'+s);
+    if (el) el.textContent = rawData.filter(r=>r.status===s).length;
+  });
+  document.getElementById('tc-all').textContent = rawData.length;
+}
+
+function setTab(t) {
+  activeTab = t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('statusFilter').value = t==='all'?'':t;
+  openDrill = null;
+  renderTable();
+}
+
+function applyFilters() { openDrill=null; renderTable(); }
+
+function sortBy(f) {
+  sortAsc = sortField===f ? !sortAsc : true;
+  sortField = f;
+  renderTable();
+}
+
+function exportCSV() {
+  const data = getFiltered();
+  const cols = ['Invoice','PO','Customer','Destination','Inv Date','Value','Partner','LR','Boxes','Qty','Status','ETA','TAT','POD Received','POD Date','GRN Done','GRN Ref','Exception'];
+  let csv = cols.join(',') + '\n';
+  data.forEach(r => {
+    csv += [`"${r.invoice}"`,`"${r.po}"`,`"${r.customer}"`,`"${r.dest}"`,r.invDate,r.invValue,
+      r.partner||'',r.lr||'',r.boxes||'',r.qty||'',`"${r.status}"`,r.eta||'',r.tatDays||'',
+      r.podReceived?'Yes':'No',r.podDate||'',r.S[5]?'Yes':'No',r.grnRef||'',`"${r.exception||''}"`
+    ].join(',') + '\n';
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `Finifi_TMS_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+updateKPIs();
+updateTabs();
+renderTable();
+</script>
+</body>
+</html>
