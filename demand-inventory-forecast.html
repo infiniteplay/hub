@@ -273,19 +273,15 @@ body {
 <body>
 
 <header>
-    <div class="header-top">
-        <div class="logo">
-            <div class="logo-mark">F</div>
-            <span class="logo-text"><span>finifi</span>&nbsp; Inventory Intelligence</span>
-        </div>
-        <div class="header-meta">
-            <span class="header-badge">Live Data</span>
-            <span class="header-date" id="live-date"></span>
-            <div class="header-actions">
-                <button class="btn-sm">Export</button>
-                <button class="btn-sm btn-primary-sm">Refresh</button>
-            </div>
-        </div>
+<div class="logo">
+    <img src="finifi-logo.png" alt="Finifi Logo" style="height: 24px;">
+    <span class="hub-title">O2C Ops Lens</span>
+  </div>
+  <div class="header-buttons">
+    <button onclick="window.location.href='index.html'">Go Back</button>
+    <button onclick="location.reload()">Refresh</button>
+    <button onclick="exportDashboard()">Export</button>
+  </div>
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <nav class="tabs-bar">
