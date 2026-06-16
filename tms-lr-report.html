@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TMS LR Report – Finifi</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#2563eb;--blue-lt:#eff6ff;
+  --green:#16a34a;--green-lt:#f0fdf4;
+  --amber:#d97706;--amber-lt:#fffbeb;
+  --red:#dc2626;--red-lt:#fef2f2;
+  --purple:#7c3aed;--purple-lt:#f5f3ff;
+  --sky:#0369a1;--sky-lt:#e0f2fe;
+  --gray:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--text:#111827;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding-top:62px}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;z-index:1000}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+.logo-text{font-size:17px;font-weight:700;color:var(--text)}
+.logo-text span{color:var(--blue)}
+.header-right{display:flex;align-items:center;gap:12px}
+.module-tag{background:var(--blue-lt);color:var(--blue);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.hbtn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:#f9fafb;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.hbtn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* DASHBOARD TABS */
+.dash-tabs{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;display:flex}
+.dtab{padding:13px 22px;font-size:13px;font-weight:500;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.dtab:hover{color:var(--text)}
+.dtab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* SECTION */
+.dash-section{display:none}
+.dash-section.active{display:block}
+
+/* FILTERS */
+.filters-bar{background:#fff;padding:12px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filters-bar input,.filters-bar select{padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;outline:none;color:var(--text)}
+.filters-bar input:focus,.filters-bar select:focus{border-color:var(--blue)}
+.filters-bar input[type=text]{width:220px}
+.fbtn{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:#f9fafb;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.fbtn:hover,.fbtn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* KPI STRIP */
+.kpi-strip{background:#fff;border-bottom:1px solid var(--border);padding:18px 28px;display:grid;grid-template-columns:repeat(7,1fr)}
+.kpi{padding:0 18px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.kpi:first-child{padding-left:0}
+.kpi:last-child{border-right:none}
+.kpi-val{font-size:24px;font-weight:700;line-height:1;color:var(--text)}
+.kpi-val.blue{color:var(--blue)} .kpi-val.green{color:var(--green)} .kpi-val.amber{color:var(--amber)} .kpi-val.red{color:var(--red)} .kpi-val.purple{color:var(--purple)} .kpi-val.sky{color:var(--sky)}
+.kpi-label{font-size:11px;color:var(--gray);font-weight:500;line-height:1.3}
+.kpi-sub{font-size:10px;color:#9ca3af;margin-top:1px}
+
+/* TABLE */
+.table-wrap{padding:20px 28px 40px}
+.table-container{border:1px solid var(--border);border-radius:8px;overflow:hidden;overflow-x:auto;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8f9fa;color:#374151;padding:10px 14px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr.main-row{border-bottom:1px solid #f3f4f6;transition:background .1s;cursor:pointer}
+tbody tr.main-row:hover{background:#fafbff}
+td{padding:12px 14px;vertical-align:middle}
+td.mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8;flex-shrink:0}
+.b-pending{background:#f1f5f9;color:#64748b}
+.b-lr-created{background:var(--blue-lt);color:var(--blue)}
+.b-dispatched{background:var(--sky-lt);color:var(--sky)}
+.b-delivered{background:var(--green-lt);color:var(--green)}
+.b-pod-done{background:#dcfce7;color:#15803d}
+.b-rto{background:var(--amber-lt);color:var(--amber)}
+.b-rto-rcvd{background:#fff7ed;color:#c2410c}
+.b-cancelled{background:var(--red-lt);color:var(--red)}
+.b-exception{background:#fdf4ff;color:#7e22ce}
+
+/* FLOW PILLS */
+.flow-pills{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
+.fp{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid #e2e8f0;background:#f3f4f6;color:#9ca3af;white-space:nowrap}
+.fp.done{background:var(--green-lt);color:var(--green);border-color:#bbf7d0}
+.fp.cur{background:var(--blue-lt);color:var(--blue);border-color:#bfdbfe}
+.fp.exc{background:var(--red-lt);color:var(--red);border-color:#fecaca}
+.fp.warn{background:var(--amber-lt);color:var(--amber);border-color:#fed7aa}
+.fp.skip{opacity:.35}
+.fp-arr{color:#d1d5db;font-size:10px;padding:0 1px}
+
+/* EXPAND */
+.xbtn{cursor:pointer;background:none;border:1px solid #d1d5db;border-radius:4px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;color:var(--gray);font-size:11px;font-weight:700;transition:all .15s;line-height:1}
+.xbtn:hover{border-color:var(--blue);color:var(--blue)}
+.xbtn.open{background:var(--blue);border-color:var(--blue);color:#fff}
+.drill-row{display:none}
+.drill-row.open{display:table-row}
+.drill-cell{padding:0!important;border-bottom:2px solid var(--blue)!important;background:#f8faff}
+
+/* DETAIL PANEL */
+.d-inner{padding:16px 24px}
+.d-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:10px;border-left:3px solid var(--blue);padding-left:8px}
+.d-section-title.green{border-color:var(--green)}
+.d-section-title.amber{border-color:var(--amber)}
+.d-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.dkv{display:flex;flex-direction:column;gap:3px}
+.dk{font-size:11px;color:var(--gray)}
+.dv{font-size:13px;font-weight:600;color:var(--text)}
+.dv.mono{font-family:monospace;font-size:12px;color:var(--blue)}
+.dv.good{color:var(--green)} .dv.bad{color:var(--red)} .dv.muted{color:#9ca3af;font-weight:400}
+.rto-block{background:var(--amber-lt);border:1px solid #fed7aa;border-radius:6px;padding:12px 16px;margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap}
+.rto-block .dkv{min-width:140px}
+
+/* FREIGHT DASHBOARD */
+.kpi-strip-5{background:#fff;border-bottom:1px solid var(--border);padding:18px 28px;display:grid;grid-template-columns:repeat(5,1fr)}
+
+/* FREIGHT BAR */
+.fbar-wrap{display:flex;align-items:center;gap:6px;min-width:160px}
+.fbar-bg{flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.fbar-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
+.fbar-fill.over{background:var(--red)}
+.fbar-fill.slight{background:var(--amber)}
+.fbar-pct{font-size:11px;font-weight:700;min-width:36px;text-align:right}
+.fbar-pct.over{color:var(--red)} .fbar-pct.slight{color:var(--amber)} .fbar-pct.ok{color:var(--green)}
+
+/* DELTA */
+.delta{font-weight:700;font-size:12px}
+.delta.pos{color:var(--red)} .delta.neg{color:var(--green)} .delta.zero{color:var(--gray)}
+
+/* LR DETAIL rows inside freight */
+.lr-sub-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
+.lr-sub-table th{background:#f1f5f9;color:#374151;padding:8px 12px;text-align:left;font-weight:600;font-size:11px;border-bottom:1px solid #e2e8f0}
+.lr-sub-table td{padding:9px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.lr-sub-table tr:last-child td{border-bottom:none}
+.component-chip{display:inline-block;padding:2px 7px;border-radius:4px;background:#f1f5f9;color:#374151;font-size:10px;font-weight:600;margin:1px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">Fi</div>
+    <div class="logo-text">finifi <span>TMS</span></div>
+  </div>
+  <div class="header-right">
+    <span class="module-tag">LR Automation Report</span>
+    <button class="hbtn">Export CSV</button>
+    <button class="hbtn">Download PDF</button>
+  </div>
+</header>
+
+<!-- DASHBOARD TABS -->
+<div class="dash-tabs">
+  <div class="dtab active" onclick="switchDash('lr')">Invoice → LR Flow & Status</div>
+  <div class="dtab" onclick="switchDash('freight')">Freight Estimated vs Charged</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DASHBOARD 1: Invoice → LR Flow -->
+<!-- ============================================================ -->
+<div class="dash-section active" id="dash-lr">
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input type="text" placeholder="Search Invoice / LR / AWB…" oninput="filterLR(this.value)"/>
+    <select onchange="filterLRStatus(this.value)">
+      <option value="">All Statuses</option>
+      <option>LR Created</option>
+      <option>Dispatched</option>
+      <option>Delivered</option>
+      <option>POD Done</option>
+      <option>RTO Initiated</option>
+      <option>RTO Received</option>
+      <option>Cancelled</option>
+    </select>
+    <select>
+      <option>All Carriers</option>
+      <option>Delhivery</option>
+      <option>DTDC</option>
+      <option>Blue Dart</option>
+      <option>Spoton</option>
+    </select>
+    <select>
+      <option>Last 30 Days</option>
+      <option>Last 7 Days</option>
+      <option>This Month</option>
+      <option>Custom</option>
+    </select>
+    <button class="fbtn">Apply</button>
+    <button class="fbtn" onclick="resetFilters()">Reset</button>
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-val blue">142</div><div class="kpi-label">Invoices Ingested</div><div class="kpi-sub">This period</div></div>
+    <div class="kpi"><div class="kpi-val blue">138</div><div class="kpi-label">LRs Created</div><div class="kpi-sub">97.2% auto</div></div>
+    <div class="kpi"><div class="kpi-val sky">89</div><div class="kpi-label">In Transit</div><div class="kpi-sub">Dispatched</div></div>
+    <div class="kpi"><div class="kpi-val green">31</div><div class="kpi-label">POD Received</div><div class="kpi-sub">Delivered & closed</div></div>
+    <div class="kpi"><div class="kpi-val amber">11</div><div class="kpi-label">RTO Initiated</div><div class="kpi-sub">4 received back</div></div>
+    <div class="kpi"><div class="kpi-val red">4</div><div class="kpi-label">Cancelled</div><div class="kpi-sub">Hold / cancelled</div></div>
+    <div class="kpi"><div class="kpi-val purple">7</div><div class="kpi-label">SLA Breached</div><div class="kpi-sub">EDD exceeded</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-container">
+      <table id="lr-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Invoice #</th>
+            <th>LR / AWB #</th>
+            <th>Carrier</th>
+            <th>Origin → Dest</th>
+            <th>Dispatch Date</th>
+            <th>EDD</th>
+            <th>Flow Status</th>
+            <th>Current Status</th>
+            <th>POD / RTO</th>
+            <th>SLA</th>
+          </tr>
+        </thead>
+        <tbody id="lr-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DASHBOARD 2: Freight Estimated vs Charged -->
+<!-- ============================================================ -->
+<div class="dash-section" id="dash-freight">
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input type="text" placeholder="Search Invoice / LR…" oninput="filterFreight(this.value)"/>
+    <select>
+      <option>All Carriers</option>
+      <option>Delhivery</option>
+      <option>DTDC</option>
+      <option>Blue Dart</option>
+      <option>Spoton</option>
+    </select>
+    <select>
+      <option>All Variances</option>
+      <option>Within estimate</option>
+      <option>&lt;10% over</option>
+      <option>&gt;10% over</option>
+    </select>
+    <select>
+      <option>Last 30 Days</option>
+      <option>Last 7 Days</option>
+      <option>This Month</option>
+    </select>
+    <button class="fbtn">Apply</button>
+  </div>
+
+  <!-- KPI Strip 5-col -->
+  <div class="kpi-strip-5" style="display:grid;grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="padding-left:0"><div class="kpi-val blue">138</div><div class="kpi-label">Invoices with LR</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#111827">₹18.4L</div><div class="kpi-label">Total Estimated Freight</div><div class="kpi-sub">System estimated</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#111827">₹21.2L</div><div class="kpi-label">Total Charged Freight</div><div class="kpi-sub">Carrier billed</div></div>
+    <div class="kpi"><div class="kpi-val red">+₹2.8L</div><div class="kpi-label">Total Overcharge</div><div class="kpi-sub">+15.2% above estimate</div></div>
+    <div class="kpi" style="border-right:none"><div class="kpi-val amber">34</div><div class="kpi-label">Invoices with Variance</div><div class="kpi-sub">24.6% of total</div></div>
+  </div>
+
+  <!-- Freight Table -->
+  <div class="table-wrap">
+    <div class="table-container">
+      <table id="freight-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Invoice #</th>
+            <th>SO #</th>
+            <th>Carrier</th>
+            <th>LR / AWB #</th>
+            <th>Boxes</th>
+            <th>Chg. Wt (kg)</th>
+            <th>Estimated (₹)</th>
+            <th>Charged (₹)</th>
+            <th>Variance (₹)</th>
+            <th>Variance %</th>
+          </tr>
+        </thead>
+        <tbody id="freight-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
+
+const lrData = [
+  {
+    inv:'1171474229', lr:'220259526', awb:'784512457845', carrier:'Delhivery', origin:'Finifi B2B, Surat', dest:'Thiruvallur, Tamil Nadu',
+    dispatchDate:'28/05/2026', edd:'03/06/2026', actual:'02/06/2026', status:'pod', podMode:'API', podRef:'POD-220259526',
+    so:'1171474229', po:'P4336908', boxes:6, wt:72, invAmt:1300, slaDays:6, slaActual:5, rto:false, cancelled:false,
+    appStatus:'Dispatched',
+  },
+  {
+    inv:'1171474228', lr:'220259527', awb:'784512457846', carrier:'Delhivery', origin:'Finifi B2B, Surat', dest:'Chennai, Tamil Nadu',
+    dispatchDate:'28/05/2026', edd:'03/06/2026', actual:null, status:'dispatched', podMode:null, podRef:null,
+    so:'1171474228', po:'P4336909', boxes:4, wt:55, invAmt:980, slaDays:6, slaActual:null, rto:false, cancelled:false,
+    appStatus:'In Transit',
+  },
+  {
+    inv:'1171382011', lr:'DTDC-887234', awb:'887234001', carrier:'DTDC', origin:'Finifi B2B, Delhi', dest:'Mumbai, Maharashtra',
+    dispatchDate:'22/05/2026', edd:'27/05/2026', actual:'30/05/2026', status:'rto', podMode:null, podRef:null,
+    so:'1171382011', po:'P4301100', boxes:8, wt:88, invAmt:2400, slaDays:5, slaActual:8, rto:true, rtoInitiated:'31/05/2026', rtoReceived:'04/06/2026', cancelled:false,
+    appStatus:'RTO Received',
+  },
+  {
+    inv:'1171390044', lr:'BD-9921003', awb:'BD9921003', carrier:'Blue Dart', origin:'Finifi B2B, Mumbai', dest:'Bengaluru, Karnataka',
+    dispatchDate:'25/05/2026', edd:'28/05/2026', actual:null, status:'rto-initiated', podMode:null, podRef:null,
+    so:'1171390044', po:'P4312200', boxes:3, wt:41, invAmt:750, slaDays:3, slaActual:null, rto:true, rtoInitiated:'02/06/2026', rtoReceived:null, cancelled:false,
+    appStatus:'RTO Initiated',
+  },
+  {
+    inv:'1171401219', lr:'SP-773901', awb:'773901', carrier:'Spoton', origin:'Finifi B2B, Pune', dest:'Hyderabad, Telangana',
+    dispatchDate:'20/05/2026', edd:'24/05/2026', actual:'24/05/2026', status:'pod', podMode:'Email', podRef:'POD-773901',
+    so:'1171401219', po:'P4290010', boxes:12, wt:130, invAmt:4500, slaDays:4, slaActual:4, rto:false, cancelled:false,
+    appStatus:'Delivered',
+  },
+  {
+    inv:'1171408830', lr:'DTDC-882100', awb:'882100002', carrier:'DTDC', origin:'Finifi B2B, Delhi', dest:'Kolkata, West Bengal',
+    dispatchDate:'26/05/2026', edd:'31/05/2026', actual:null, status:'dispatched', podMode:null, podRef:null,
+    so:'1171408830', po:'P4298800', boxes:6, wt:70, invAmt:1800, slaDays:5, slaActual:null, rto:false, cancelled:false,
+    appStatus:'In Transit',
+  },
+  {
+    inv:'1171415990', lr:null, awb:null, carrier:'Delhivery', origin:'Finifi B2B, Surat', dest:'Jaipur, Rajasthan',
+    dispatchDate:null, edd:null, actual:null, status:'cancelled', podMode:null, podRef:null,
+    so:'1171415990', po:'P4305500', boxes:5, wt:60, invAmt:1200, slaDays:null, slaActual:null, rto:false, cancelled:true,
+    appStatus:'Cancelled',
+  },
+  {
+    inv:'1171421003', lr:'BD-9944002', awb:'BD9944002', carrier:'Blue Dart', origin:'Finifi B2B, Mumbai', dest:'Ahmedabad, Gujarat',
+    dispatchDate:'24/05/2026', edd:'27/05/2026', actual:'29/05/2026', status:'delivered', podMode:'WhatsApp', podRef:'POD-9944002',
+    so:'1171421003', po:'P4320100', boxes:9, wt:95, invAmt:3100, slaDays:3, slaActual:5, rto:false, cancelled:false,
+    appStatus:'Delivered',
+  },
+  {
+    inv:'1171433100', lr:'220291001', awb:'784512478001', carrier:'Delhivery', origin:'Finifi B2B, Chennai', dest:'Coimbatore, Tamil Nadu',
+    dispatchDate:'29/05/2026', edd:'02/06/2026', actual:'01/06/2026', status:'pod', podMode:'API', podRef:'POD-291001',
+    so:'1171433100', po:'P4330011', boxes:7, wt:80, invAmt:2200, slaDays:4, slaActual:3, rto:false, cancelled:false,
+    appStatus:'Delivered',
+  },
+  {
+    inv:'1171440501', lr:'SP-780002', awb:'780002', carrier:'Spoton', origin:'Finifi B2B, Pune', dest:'Nagpur, Maharashtra',
+    dispatchDate:'01/06/2026', edd:'05/06/2026', actual:null, status:'lr-created', podMode:null, podRef:null,
+    so:'1171440501', po:'P4340220', boxes:2, wt:28, invAmt:650, slaDays:4, slaActual:null, rto:false, cancelled:false,
+    appStatus:'LR Created',
+  },
+];
+
+const freightData = [
+  {
+    inv:'1171474229', so:'1171474229', carrier:'Delhivery', lr:'220259526', boxes:6, wt:72,
+    components:[
+      {name:'Base Freight',est:1100,act:1249},{name:'Fuel Surcharge',est:2400,act:2520},
+      {name:'Fuel Hike',est:260,act:280.80},{name:'Insurance (RoV)',est:200,act:200},
+      {name:'GST (18%)',est:720,act:800.96}
+    ],
+    est:4680, act:5250.76,
+  },
+  {
+    inv:'1171474228', so:'1171474228', carrier:'Delhivery', lr:'220259527', boxes:4, wt:55,
+    components:[
+      {name:'Base Freight',est:1600,act:1753},{name:'Fuel Surcharge',est:2400,act:2520},
+      {name:'Fuel Hike',est:210,act:224.64},{name:'Insurance (RoV)',est:200,act:200},
+      {name:'First Mile (FM)',est:0,act:720},{name:'To Pay',est:0,act:200},
+      {name:'Other Handling',est:0,act:200},{name:'GST (18%)',est:792,act:881.58}
+    ],
+    est:5202, act:5779.22,
+  },
+  {
+    inv:'1171401219', so:'1171401219', carrier:'Spoton', lr:'SP-773901', boxes:12, wt:130,
+    components:[
+      {name:'Base Freight',est:3200,act:3200},{name:'Fuel Surcharge',est:4100,act:4100},
+      {name:'Fuel Hike',est:410,act:410},{name:'Insurance (RoV)',est:350,act:350},
+      {name:'GST (18%)',est:1449,act:1449}
+    ],
+    est:9509, act:9509,
+  },
+  {
+    inv:'1171408830', so:'1171408830', carrier:'DTDC', lr:'DTDC-882100', boxes:6, wt:70,
+    components:[
+      {name:'Base Freight',est:1800,act:2100},{name:'Fuel Surcharge',est:3200,act:3200},
+      {name:'Insurance (RoV)',est:180,act:180},{name:'GST (18%)',est:924,act:988.20}
+    ],
+    est:6104, act:6468.20,
+  },
+  {
+    inv:'1171421003', so:'1171421003', carrier:'Blue Dart', lr:'BD-9944002', boxes:9, wt:95,
+    components:[
+      {name:'Base Freight',est:2800,act:3100},{name:'Fuel Surcharge',est:4900,act:5200},
+      {name:'Insurance (RoV)',est:280,act:280},{name:'GST (18%)',est:1436.40,act:1530}
+    ],
+    est:9416.40, act:10110,
+  },
+  {
+    inv:'1171433100', so:'1171433100', carrier:'Delhivery', lr:'220291001', boxes:7, wt:80,
+    components:[
+      {name:'Base Freight',est:1900,act:1900},{name:'Fuel Surcharge',est:3100,act:3100},
+      {name:'Insurance (RoV)',est:200,act:200},{name:'GST (18%)',est:954,act:954}
+    ],
+    est:6154, act:6154,
+  },
+  {
+    inv:'1171440501', so:'1171440501', carrier:'Spoton', lr:'SP-780002', boxes:2, wt:28,
+    components:[
+      {name:'Base Freight',est:900,act:940},{name:'Fuel Surcharge',est:1200,act:1280},
+      {name:'Insurance (RoV)',est:100,act:100},{name:'GST (18%)',est:396,act:417.60}
+    ],
+    est:2596, act:2737.60,
+  },
+];
+
+// ─── RENDER LR TABLE ─────────────────────────────────────────────────────────
+
+function statusBadge(r){
+  if(r.cancelled) return '<span class="badge b-cancelled"><span class="bdot"></span>Cancelled</span>';
+  if(r.status==='pod') return '<span class="badge b-pod-done"><span class="bdot"></span>POD Received</span>';
+  if(r.status==='rto') return '<span class="badge b-rto-rcvd"><span class="bdot"></span>RTO Received</span>';
+  if(r.status==='rto-initiated') return '<span class="badge b-rto"><span class="bdot"></span>RTO Initiated</span>';
+  if(r.status==='delivered') return '<span class="badge b-delivered"><span class="bdot"></span>Delivered</span>';
+  if(r.status==='dispatched') return '<span class="badge b-dispatched"><span class="bdot"></span>In Transit</span>';
+  if(r.status==='lr-created') return '<span class="badge b-lr-created"><span class="bdot"></span>LR Created</span>';
+  return '<span class="badge b-pending"><span class="bdot"></span>Pending</span>';
+}
+
+function flowPills(r){
+  // stages: INV | LR | DISP | DLVR | POD/RTO
+  const s = r.status;
+  const cancelled = r.cancelled;
+  function fp(label, state){ return `<span class="fp ${state}">${label}</span>`; }
+  const arr = `<span class="fp-arr">›</span>`;
+
+  let inv = fp('INV','done');
+  let lr = cancelled || !r.lr ? fp('LR', cancelled?'exc':'skip') : fp('LR','done');
+  let disp = r.dispatchDate && !cancelled ? fp('DISP','done') : fp('DISP', cancelled?'skip':'skip');
+  let dlvr, pod;
+
+  if(s==='pod'||s==='delivered'){
+    disp=fp('DISP','done'); dlvr=fp('DLVR','done');
+    pod = s==='pod' ? fp('POD','done') : fp('POD','cur');
+  } else if(s==='rto'||s==='rto-initiated'){
+    disp=fp('DISP','done'); dlvr=fp('RTO','warn');
+    pod = s==='rto' ? fp('RCVD','done') : fp('RCVD','skip');
+  } else if(s==='dispatched'){
+    disp=fp('DISP','done'); dlvr=fp('DLVR','cur'); pod=fp('POD','skip');
+  } else if(s==='lr-created'){
+    disp=fp('DISP','skip'); dlvr=fp('DLVR','skip'); pod=fp('POD','skip');
+  } else if(cancelled){
+    disp=fp('DISP','skip'); dlvr=fp('DLVR','skip'); pod=fp('POD','skip');
+  } else {
+    disp=fp('DISP','skip'); dlvr=fp('DLVR','skip'); pod=fp('POD','skip');
+  }
+  return `<div class="flow-pills">${inv}${arr}${lr}${arr}${disp}${arr}${dlvr}${arr}${pod}</div>`;
+}
+
+function slaTag(r){
+  if(!r.slaDays) return '<span style="color:#9ca3af;font-size:12px">—</span>';
+  if(r.slaActual===null){
+    const today = new Date('2026-06-16');
+    const edd = parseDate(r.edd);
+    if(!edd) return '—';
+    const diff = Math.ceil((edd - today)/(1000*60*60*24));
+    if(diff < 0) return `<span class="delta pos">+${Math.abs(diff)}d breach</span>`;
+    return `<span style="color:var(--sky);font-size:12px">${diff}d remaining</span>`;
+  }
+  const diff = r.slaActual - r.slaDays;
+  if(diff > 0) return `<span class="delta pos">+${diff}d over SLA</span>`;
+  if(diff === 0) return `<span class="delta zero">On SLA</span>`;
+  return `<span class="delta neg">${Math.abs(diff)}d early</span>`;
+}
+
+function parseDate(s){
+  if(!s) return null;
+  const [d,m,y] = s.split('/');
+  return new Date(`${y}-${m}-${d}`);
+}
+
+function podInfo(r){
+  if(r.status==='pod') return `<span style="font-size:11px;color:var(--green);font-weight:600">${r.podMode}</span><br><span style="font-size:10px;color:var(--gray)">${r.podRef}</span>`;
+  if(r.status==='rto') return `<span style="font-size:11px;color:#c2410c;font-weight:600">RTO Rcvd</span><br><span style="font-size:10px;color:var(--gray)">${r.rtoReceived}</span>`;
+  if(r.status==='rto-initiated') return `<span style="font-size:11px;color:var(--amber);font-weight:600">RTO Init.</span><br><span style="font-size:10px;color:var(--gray)">${r.rtoInitiated}</span>`;
+  if(r.cancelled) return `<span style="font-size:11px;color:var(--red);font-weight:600">Cancelled</span>`;
+  return '<span style="color:#9ca3af;font-size:12px">—</span>';
+}
+
+function renderLRTable(data){
+  const tbody = document.getElementById('lr-tbody');
+  tbody.innerHTML = '';
+  data.forEach((r,i)=>{
+    const main = document.createElement('tr');
+    main.className = 'main-row';
+    main.setAttribute('data-id', i);
+    main.innerHTML = `
+      <td><button class="xbtn" onclick="toggleDrill(${i}, this)">+</button></td>
+      <td class="mono" style="font-weight:600">${r.inv}</td>
+      <td class="mono">${r.lr ? r.lr : '<span style="color:#9ca3af">Not created</span>'}</td>
+      <td><span style="font-size:12px;font-weight:600">${r.carrier}</span></td>
+      <td style="font-size:12px;color:var(--gray)">${r.origin.split(',')[0]} → ${r.dest.split(',')[0]}</td>
+      <td style="font-size:12px">${r.dispatchDate||'—'}</td>
+      <td style="font-size:12px">${r.edd||'—'}</td>
+      <td>${flowPills(r)}</td>
+      <td>${statusBadge(r)}</td>
+      <td>${podInfo(r)}</td>
+      <td>${slaTag(r)}</td>
+    `;
+    tbody.appendChild(main);
+
+    const drill = document.createElement('tr');
+    drill.className = 'drill-row';
+    drill.id = `drill-${i}`;
+    drill.innerHTML = `<td class="drill-cell" colspan="11">${renderLRDetail(r)}</td>`;
+    tbody.appendChild(drill);
+  });
+}
+
+function renderLRDetail(r){
+  const rtoBlock = r.rto ? `
+    <div class="rto-block">
+      <div class="dkv"><div class="dk">RTO Initiated</div><div class="dv bad">${r.rtoInitiated||'—'}</div></div>
+      <div class="dkv"><div class="dk">RTO Received</div><div class="dv ${r.rtoReceived?'bad':'muted'}">${r.rtoReceived||'Pending'}</div></div>
+      <div class="dkv"><div class="dk">Reason</div><div class="dv muted">Delivery attempt failed</div></div>
+    </div>` : '';
+
+  return `<div class="d-inner">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div>
+        <div class="d-section-title">Shipment Details</div>
+        <div class="d-grid">
+          <div class="dkv"><div class="dk">PO Number</div><div class="dv mono">${r.po||'—'}</div></div>
+          <div class="dkv"><div class="dk">SO Number</div><div class="dv mono">${r.so||'—'}</div></div>
+          <div class="dkv"><div class="dk">Invoice Amount</div><div class="dv">₹${r.invAmt.toLocaleString()}</div></div>
+          <div class="dkv"><div class="dk">Boxes</div><div class="dv">${r.boxes}</div></div>
+          <div class="dkv"><div class="dk">Charged Weight</div><div class="dv">${r.wt} kg</div></div>
+          <div class="dkv"><div class="dk">AWB Number</div><div class="dv mono">${r.awb||'—'}</div></div>
+          <div class="dkv"><div class="dk">Pickup Location</div><div class="dv" style="font-size:12px">${r.origin}</div></div>
+          <div class="dkv"><div class="dk">Drop Location</div><div class="dv" style="font-size:12px">${r.dest}</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="d-section-title green">Delivery & POD</div>
+        ${rtoBlock}
+        <div class="d-grid">
+          <div class="dkv"><div class="dk">Dispatch Date</div><div class="dv">${r.dispatchDate||'—'}</div></div>
+          <div class="dkv"><div class="dk">Expected Delivery</div><div class="dv">${r.edd||'—'}</div></div>
+          <div class="dkv"><div class="dk">Actual Delivery</div><div class="dv ${r.actual?'good':'muted'}">${r.actual||'Pending'}</div></div>
+          <div class="dkv"><div class="dk">POD Mode</div><div class="dv">${r.podMode||'—'}</div></div>
+          <div class="dkv"><div class="dk">POD Reference</div><div class="dv mono" style="font-size:11px">${r.podRef||'—'}</div></div>
+          <div class="dkv"><div class="dk">SLA (Days)</div><div class="dv">${r.slaDays||'—'}</div></div>
+          <div class="dkv"><div class="dk">Actual Days</div><div class="dv">${r.slaActual||'—'}</div></div>
+          <div class="dkv"><div class="dk">SLA Status</div><div class="dv">${slaTag(r)}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── RENDER FREIGHT TABLE ─────────────────────────────────────────────────────
+
+function varPct(est, act){
+  if(est===0) return null;
+  return ((act - est)/est*100).toFixed(1);
+}
+
+function renderFreightTable(data){
+  const tbody = document.getElementById('freight-tbody');
+  tbody.innerHTML='';
+  data.forEach((r,i)=>{
+    const var_amt = r.act - r.est;
+    const pct = varPct(r.est, r.act);
+    const pctNum = parseFloat(pct);
+    const pctClass = pctNum > 10 ? 'over' : pctNum > 0 ? 'slight' : '';
+    const barFill = Math.min(Math.abs(pctNum)/30*100, 100);
+
+    const main = document.createElement('tr');
+    main.className = 'main-row';
+    main.innerHTML = `
+      <td><button class="xbtn" onclick="toggleFreightDrill(${i}, this)">+</button></td>
+      <td class="mono" style="font-weight:600">${r.inv}</td>
+      <td class="mono">${r.so}</td>
+      <td style="font-size:12px;font-weight:600">${r.carrier}</td>
+      <td class="mono">${r.lr}</td>
+      <td style="font-size:12px;text-align:right">${r.boxes}</td>
+      <td style="font-size:12px;text-align:right">${r.wt}</td>
+      <td style="font-size:13px;font-weight:600;text-align:right">₹${r.est.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td style="font-size:13px;font-weight:600;text-align:right">₹${r.act.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td style="text-align:right"><span class="delta ${var_amt>0?'pos':var_amt<0?'neg':'zero'}">${var_amt>=0?'+':''}₹${Math.abs(var_amt).toLocaleString('en-IN',{minimumFractionDigits:2})}</span></td>
+      <td>
+        <div class="fbar-wrap">
+          <div class="fbar-bg"><div class="fbar-fill ${pctClass}" style="width:${barFill}%"></div></div>
+          <span class="fbar-pct ${pctClass||'ok'}">${pctNum>0?'+':''}${pct}%</span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(main);
+
+    const drill = document.createElement('tr');
+    drill.className='drill-row';
+    drill.id=`fdrill-${i}`;
+    drill.innerHTML=`<td class="drill-cell" colspan="11">${renderFreightDetail(r)}</td>`;
+    tbody.appendChild(drill);
+  });
+}
+
+function renderFreightDetail(r){
+  const rows = r.components.map(c=>{
+    const v = c.act - c.est;
+    const pct = c.est>0 ? ((v/c.est)*100).toFixed(1) : '—';
+    return `<tr>
+      <td><span class="component-chip">${c.name}</span></td>
+      <td style="text-align:right">₹${c.est.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td style="text-align:right">₹${c.act.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td style="text-align:right"><span class="delta ${v>0?'pos':v<0?'neg':'zero'}">${v>=0?'+':''}₹${Math.abs(v).toFixed(2)}</span></td>
+      <td style="text-align:right;font-size:11px;color:var(--gray)">${c.est>0?pct+'%':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="d-inner">
+    <div class="d-section-title amber">Freight Component Breakdown – Invoice ${r.inv}</div>
+    <div style="max-width:700px">
+      <table class="lr-sub-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th style="text-align:right">Estimated (₹)</th>
+            <th style="text-align:right">Charged (₹)</th>
+            <th style="text-align:right">Variance (₹)</th>
+            <th style="text-align:right">Variance %</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr style="background:#f8f9fa;font-weight:700">
+            <td>Total</td>
+            <td style="text-align:right">₹${r.est.toFixed(2)}</td>
+            <td style="text-align:right">₹${r.act.toFixed(2)}</td>
+            <td style="text-align:right"><span class="delta ${r.act>r.est?'pos':'neg'}">${r.act>r.est?'+':''}₹${(r.act-r.est).toFixed(2)}</span></td>
+            <td style="text-align:right"><span class="delta ${r.act>r.est?'pos':'neg'}">${r.act>r.est?'+':''}${varPct(r.est,r.act)}%</span></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── INTERACTIONS ─────────────────────────────────────────────────────────────
+
+function switchDash(id){
+  document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('dash-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+let openLR = null;
+function toggleDrill(i, btn){
+  const row = document.getElementById(`drill-${i}`);
+  if(openLR !== null && openLR !== i){
+    document.getElementById(`drill-${openLR}`).classList.remove('open');
+    document.querySelector(`[data-id="${openLR}"] .xbtn`).classList.remove('open');
+    document.querySelector(`[data-id="${openLR}"] .xbtn`).textContent='+';
+  }
+  const isOpen = row.classList.contains('open');
+  row.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '−';
+  openLR = isOpen ? null : i;
+}
+
+let openFreight = null;
+function toggleFreightDrill(i, btn){
+  const row = document.getElementById(`fdrill-${i}`);
+  if(openFreight !== null && openFreight !== i){
+    document.getElementById(`fdrill-${openFreight}`).classList.remove('open');
+  }
+  const isOpen = row.classList.contains('open');
+  row.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '−';
+  openFreight = isOpen ? null : i;
+}
+
+function filterLR(val){
+  const q = val.toLowerCase();
+  document.querySelectorAll('#lr-tbody tr.main-row').forEach((row,i)=>{
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(q) ? '' : 'none';
+    const drill = document.getElementById(`drill-${row.getAttribute('data-id')}`);
+    if(drill) drill.style.display='none';
+  });
+}
+
+function filterLRStatus(val){}
+function resetFilters(){
+  document.querySelectorAll('#lr-tbody tr').forEach(r=>r.style.display='');
+}
+
+function filterFreight(val){
+  const q = val.toLowerCase();
+  document.querySelectorAll('#freight-tbody tr').forEach(r=>{
+    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// Init
+renderLRTable(lrData);
+renderFreightTable(freightData);
+</script>
+</body>
+</html>
